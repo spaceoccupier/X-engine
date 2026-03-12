@@ -289,6 +289,7 @@ textarea.af-inp{resize:none;min-height:70px;}
       <button class="field-eye" onclick="toggleEye('apiKeyInp',this)">👁</button>
     </div>
     <button class="ob-btn" onclick="submitApiKey()">Continue →</button>
+    <button class="ob-btn sec" id="testKeyBtn" onclick="testApiKey()">Test Key First</button>
     <div class="ob-err" id="apiKeyErr"></div>
     <div class="ob-note">// stored only on this device · never sent anywhere else · only used to call Claude API</div>
   </div>
@@ -584,6 +585,42 @@ function submitApiKey(){
   buildKP('setPassKP',handleSetPass);
 }
 document.getElementById('apiKeyInp').addEventListener('keydown',e=>{if(e.key==='Enter')submitApiKey();});
+
+async function testApiKey(){
+  const val=document.getElementById('apiKeyInp').value.trim();
+  const errEl=document.getElementById('apiKeyErr');
+  const btn=document.getElementById('testKeyBtn');
+  if(!val.startsWith('sk-ant-')){ errEl.textContent='Key must start with sk-ant-'; return; }
+  btn.textContent='Testing...'; btn.disabled=true; errEl.textContent='';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':val,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-haiku-4-5',
+        max_tokens:10,
+        messages:[{role:'user',content:'say hi'}]
+      })
+    });
+    const data=await res.json();
+    if(res.ok && data.content){
+      errEl.style.color='var(--green)';
+      errEl.textContent='✓ Key works! Click Continue.';
+    } else {
+      errEl.style.color='var(--red)';
+      errEl.textContent='✗ '+(data?.error?.message||'Invalid key');
+    }
+  }catch(e){
+    errEl.style.color='var(--red)';
+    errEl.textContent='✗ Network error — check connection';
+  }
+  btn.textContent='Test Key First'; btn.disabled=false;
+}
 
 // ── FORGOT PASSCODE (verify by API key) ──
 function showForgotPass(){ showScreen('sForgotPass'); }
@@ -1126,28 +1163,36 @@ function copyRaw(text){navigator.clipboard.writeText(text).then(()=>showToast('C
 // ── CORE API CALL ──
 async function callAPI(system, user, maxTokens=1000){
   const key=localStorage.getItem('xe_key');
-  if(!key) throw new Error('No API key');
-  const res=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'x-api-key':key,
-      'anthropic-version':'2023-06-01',
-      'anthropic-dangerous-direct-browser-access':'true'
-    },
-    body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',
-      max_tokens:maxTokens,
-      system:system,
-      messages:[{role:'user',content:user}]
-    })
-  });
+  if(!key){ showToast('No API key — go to lock screen'); throw new Error('No key'); }
+  let res;
+  try{
+    res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-haiku-4-5',
+        max_tokens:maxTokens,
+        system:system,
+        messages:[{role:'user',content:user}]
+      })
+    });
+  }catch(netErr){
+    showToast('Network error — check connection');
+    throw netErr;
+  }
   if(!res.ok){
-    const err=await res.json().catch(()=>({}));
-    throw new Error(err?.error?.message||`HTTP ${res.status}`);
+    let msg='HTTP '+res.status;
+    try{ const e=await res.json(); msg=e?.error?.message||msg; }catch(e){}
+    showToast('Error: '+msg.slice(0,55));
+    throw new Error(msg);
   }
   const data=await res.json();
-  if(data.error) throw new Error(data.error.message);
+  if(data.error){ showToast('API: '+data.error.message.slice(0,55)); throw new Error(data.error.message); }
   if(!data.content||!data.content[0]) throw new Error('Empty response');
   return data.content[0].text.trim();
 }
