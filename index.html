@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="X Engine">
+<meta name="theme-color" content="#060606">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>X Engine</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=Syne:wght@700;800&display=swap');
+:root{
+  --bg:#060606;--s1:#0e0e0e;--s2:#161616;--border:#1f1f1f;--border2:#2c2c2c;
+  --accent:#e8ff00;--red:#ff4444;--text:#c8c8c8;--muted:#3a3a3a;--muted2:#5a5a5a;
+  --white:#efefef;--green:#4ade80;--blue:#60a5fa;--orange:#fb923c;
+  --mono:'IBM Plex Mono',monospace;--display:'Syne',sans-serif;
+  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);
+  --sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{color:var(--text);font-family:var(--mono);font-size:14px;overscroll-behavior:none;}
+input,textarea,select{font-size:16px!important;} /* prevents iOS zoom */
+
+/* SCREEN */
+.screen{
+  position:fixed;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:calc(20px + var(--st)) calc(20px + var(--sr)) calc(20px + var(--sb)) calc(20px + var(--sl));
+  background:var(--bg);transition:opacity .2s,transform .2s;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.screen.hidden{opacity:0;pointer-events:none;transform:scale(.97);}
+
+/* ONBOARDING */
+.ob-wrap{width:100%;max-width:420px;}
+.ob-eyebrow{font-size:10px;letter-spacing:3px;color:var(--muted2);text-transform:uppercase;margin-bottom:14px;}
+.ob-title{font-family:var(--display);font-size:clamp(32px,9vw,48px);font-weight:800;color:var(--white);line-height:1.0;margin-bottom:10px;}
+.ob-title span{color:var(--accent);}
+.ob-sub{font-size:12px;color:var(--muted2);line-height:1.8;margin-bottom:28px;}
+.ob-sub a{color:var(--accent);text-decoration:none;}
+.step-bar{display:flex;gap:6px;margin-bottom:28px;}
+.step-dot{height:3px;width:24px;background:var(--border2);border-radius:2px;transition:background .3s;}
+.step-dot.active{background:var(--accent);}
+.field-wrap{position:relative;margin-bottom:12px;}
+.field-input{
+  width:100%;background:var(--s1);border:1px solid var(--border2);
+  color:var(--white);font-family:var(--mono);font-size:14px!important;
+  padding:16px 50px 16px 16px;outline:none;border-radius:6px;
+  transition:border-color .2s;-webkit-appearance:none;
+}
+.field-input:focus{border-color:var(--accent);}
+.field-input::placeholder{color:var(--muted2);}
+.field-eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted2);cursor:pointer;font-size:18px;padding:4px;}
+.ob-btn{
+  width:100%;background:var(--accent);color:#000;border:none;
+  font-family:var(--display);font-size:13px;font-weight:800;
+  letter-spacing:3px;text-transform:uppercase;padding:17px;
+  cursor:pointer;border-radius:6px;margin-bottom:10px;
+  -webkit-appearance:none;transition:opacity .15s;
+}
+.ob-btn:active{opacity:.75;}
+.ob-btn.sec{background:transparent;border:1px solid var(--border2);color:var(--muted2);font-family:var(--mono);font-size:12px;font-weight:400;letter-spacing:1.5px;}
+.ob-btn.sec:active{color:var(--white);}
+.ob-btn:disabled{opacity:.35;}
+.ob-err{font-size:12px;color:var(--red);margin-top:8px;min-height:18px;letter-spacing:.3px;}
+.ob-note{font-size:10px;color:var(--muted);line-height:1.8;margin-top:14px;}
+
+/* PIN */
+.pin-wrap{width:100%;max-width:320px;text-align:center;}
+.pin-title{font-family:var(--display);font-size:28px;font-weight:800;color:var(--white);margin-bottom:8px;}
+.pin-sub{font-size:12px;color:var(--muted2);line-height:1.7;margin-bottom:36px;}
+.pin-dots{display:flex;justify-content:center;gap:18px;margin-bottom:44px;}
+.pin-dot{width:15px;height:15px;border-radius:50%;border:2px solid var(--border2);background:transparent;transition:all .12s;}
+.pin-dot.filled{background:var(--accent);border-color:var(--accent);}
+.pin-dot.error{background:var(--red);border-color:var(--red);}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:260px;margin:0 auto 24px;}
+.pin-key{
+  aspect-ratio:1;background:var(--s1);border:1px solid var(--border);
+  color:var(--white);font-family:var(--display);font-size:22px;font-weight:700;
+  cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  transition:all .08s;user-select:none;-webkit-appearance:none;
+}
+.pin-key:active,.pin-key.pressed{background:var(--accent);color:#000;border-color:var(--accent);transform:scale(.9);}
+.pin-key.del{font-size:18px;}
+.pin-key.ghost{visibility:hidden;}
+.pin-link{font-size:12px;color:var(--muted2);cursor:pointer;text-decoration:underline;letter-spacing:.3px;}
+.pin-links{display:flex;flex-direction:column;gap:10px;align-items:center;margin-top:16px;}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.shake{animation:shake .4s ease;}
+
+/* APP SHELL */
+#screenApp{padding:0;justify-content:flex-start;overflow:hidden;}
+.app-shell{display:flex;flex-direction:column;width:100%;height:100%;padding-top:var(--st);padding-bottom:var(--sb);}
+
+/* TOPBAR */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0;
+  min-height:48px;
+}
+.topbar-title{font-family:var(--display);font-size:17px;font-weight:800;color:var(--white);}
+.topbar-title span{color:var(--accent);}
+.topbar-r{display:flex;align-items:center;gap:8px;}
+.streak-pill{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--orange);letter-spacing:.5px;}
+.tb-btn{background:transparent;border:1px solid var(--border);color:var(--muted2);font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:6px 12px;cursor:pointer;text-transform:uppercase;border-radius:4px;}
+.tb-btn:active{color:var(--white);}
+
+/* TABS */
+.tabbar{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;}
+.tabbar::-webkit-scrollbar{display:none;}
+.tab-btn{
+  flex:1;min-width:60px;background:transparent;border:none;color:var(--muted2);
+  font-family:var(--mono);font-size:9px;letter-spacing:1.5px;padding:11px 4px;
+  cursor:pointer;text-transform:uppercase;position:relative;white-space:nowrap;
+}
+.tab-btn.active{color:var(--accent);}
+.tab-btn.active::after{content:'';position:absolute;bottom:0;left:15%;right:15%;height:2px;background:var(--accent);border-radius:1px;}
+
+/* CONTENT */
+.tab-content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;}
+.tab-content::-webkit-scrollbar{display:none;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.slabel{font-size:9px;letter-spacing:2.5px;color:var(--muted2);text-transform:uppercase;margin-bottom:10px;}
+
+/* THOUGHT BANK */
+.thought-bank{background:var(--s1);border:1px solid var(--border);margin-bottom:16px;border-radius:8px;overflow:hidden;}
+.tb-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);}
+.tb-head-title{font-size:9px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;}
+.tb-input-row{display:flex;}
+.tb-textarea{flex:1;background:transparent;border:none;border-right:1px solid var(--border);color:var(--white);font-family:var(--mono);font-size:14px!important;padding:12px 14px;outline:none;resize:none;min-height:52px;}
+.tb-textarea::placeholder{color:var(--muted2);}
+.tb-add-btn{background:transparent;border:none;color:var(--muted2);font-size:22px;padding:0 18px;cursor:pointer;flex-shrink:0;}
+.tb-add-btn:active{color:var(--accent);}
+.saved-thoughts{max-height:130px;overflow-y:auto;}
+.thought-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;gap:10px;}
+.thought-item:last-child{border-bottom:none;}
+.thought-item:active{background:var(--s2);}
+.thought-item.sel{background:#181800;border-left:3px solid var(--accent);}
+.t-preview{font-size:12px;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t-del{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:4px 6px;flex-shrink:0;}
+.no-thoughts{padding:12px 14px;font-size:10px;color:var(--muted);letter-spacing:1px;}
+.thought-notice{font-size:9px;color:var(--accent);letter-spacing:1px;margin-bottom:10px;display:none;}
+.thought-notice.show{display:block;}
+
+/* CHIPS */
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;transition:opacity .3s;}
+.chip-row.dim{opacity:.2;pointer-events:none;}
+.chip{background:var(--s1);border:1px solid var(--border);color:var(--muted2);font-family:var(--mono);font-size:9px;padding:7px 13px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;border-radius:4px;user-select:none;transition:all .1s;}
+.chip.on{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600;}
+.tone-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.tone-chip{background:var(--s1);border:1px solid var(--border);color:var(--muted2);font-family:var(--mono);font-size:9px;padding:7px 13px;cursor:pointer;letter-spacing:1px;border-radius:4px;user-select:none;transition:all .1s;}
+.tone-chip.on{background:var(--s2);border-color:var(--border2);color:var(--white);}
+
+/* GEN BUTTONS */
+.gen-row{display:flex;gap:8px;margin-bottom:16px;}
+.gen-btn{flex:1;background:var(--accent);color:#000;border:none;font-family:var(--display);font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;padding:15px 8px;cursor:pointer;border-radius:6px;transition:opacity .15s;}
+.gen-btn:active{opacity:.75;}
+.gen-btn:disabled{opacity:.35;}
+.regen-btn{background:var(--s1);border:1px solid var(--border2);color:var(--muted2);font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:15px 14px;cursor:pointer;border-radius:6px;white-space:nowrap;}
+.regen-btn:active{color:var(--accent);}
+.regen-btn:disabled{opacity:.35;}
+
+/* TWEET SLOTS */
+.slot{background:var(--s1);border:1px solid var(--border);margin-bottom:6px;border-radius:8px;overflow:hidden;}
+.slot-head{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;border-bottom:1px solid var(--border);}
+.slot-time{font-size:9px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;}
+.slot-tag{font-size:9px;letter-spacing:1px;color:var(--muted2);text-transform:uppercase;}
+.slot-body{padding:14px 13px;min-height:64px;}
+.tweet-text{font-size:13px;line-height:1.75;color:var(--white);white-space:pre-wrap;word-break:break-word;outline:none;}
+.slot-empty{font-size:11px;color:var(--muted);}
+.slot-loading{display:flex;align-items:center;gap:5px;}
+.ld{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:blink .9s ease-in-out infinite;display:inline-block;}
+.ld:nth-child(2){animation-delay:.18s}.ld:nth-child(3){animation-delay:.36s}
+@keyframes blink{0%,100%{opacity:.12}50%{opacity:1}}
+.slot-foot{display:flex;align-items:center;justify-content:space-between;padding:8px 13px;border-top:1px solid var(--border);flex-wrap:wrap;gap:6px;}
+.char-wrap{display:flex;align-items:center;gap:7px;}
+.char-bar{width:44px;height:2px;background:var(--border2);border-radius:1px;overflow:hidden;}
+.char-fill{height:100%;background:var(--accent);border-radius:1px;transition:width .25s,background .25s;}
+.char-num{font-size:9px;color:var(--muted2);}
+.char-num.warn{color:var(--red);}
+.foot-btns{display:flex;gap:5px;align-items:center;}
+.fbt{background:transparent;border:1px solid var(--border);color:var(--muted2);font-family:var(--mono);font-size:9px;letter-spacing:.5px;padding:5px 11px;cursor:pointer;text-transform:uppercase;border-radius:4px;transition:all .1s;}
+.fbt:active{color:var(--white);border-color:var(--border2);}
+.fbt:disabled{opacity:.3;}
+.fbt.ok{border-color:var(--green);color:var(--green);}
+.fbt.done{border-color:var(--accent);color:var(--accent);}
+.vscore{font-size:9px;padding:3px 8px;border-radius:4px;font-weight:600;border:1px solid;}
+.vs-hot{color:var(--red);border-color:var(--red);background:rgba(255,68,68,.08);}
+.vs-good{color:var(--orange);border-color:var(--orange);background:rgba(251,146,60,.08);}
+.vs-ok{color:var(--accent);border-color:var(--accent);background:rgba(232,255,0,.08);}
+.vs-low{color:var(--muted2);border-color:var(--muted);}
+
+/* STREAK */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.stat-card{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center;}
+.stat-n{font-family:var(--display);font-size:30px;font-weight:800;color:var(--white);}
+.stat-l{font-size:9px;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase;margin-top:4px;}
+.streak-card{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:22px 16px;margin-bottom:12px;text-align:center;}
+.streak-n{font-family:var(--display);font-size:72px;font-weight:800;color:var(--accent);line-height:1;}
+.streak-l{font-size:10px;letter-spacing:2px;color:var(--muted2);text-transform:uppercase;margin-top:6px;}
+.streak-sub{font-size:12px;color:var(--muted2);margin-top:8px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:16px;}
+.cal-lbl{font-size:8px;color:var(--muted2);text-align:center;}
+.cal-day{aspect-ratio:1;border-radius:3px;background:var(--border);}
+.cal-day.hit{background:var(--accent);}
+.cal-day.today{box-shadow:0 0 0 2px var(--accent);}
+.streak-mark{width:100%;background:var(--accent);color:#000;border:none;font-family:var(--display);font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;padding:16px;cursor:pointer;border-radius:8px;margin-top:12px;transition:opacity .15s;}
+.streak-mark:active{opacity:.75;}
+.streak-mark:disabled{opacity:.35;}
+
+/* THREAD */
+.thread-form{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:14px;}
+.af-label{font-size:9px;letter-spacing:2px;color:var(--muted2);text-transform:uppercase;margin-bottom:7px;}
+.af-inp{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--white);font-family:var(--mono);font-size:14px!important;padding:12px;outline:none;border-radius:6px;-webkit-appearance:none;transition:border-color .2s;}
+.af-inp:focus{border-color:var(--accent);}
+.af-inp::placeholder{color:var(--muted2);}
+textarea.af-inp{resize:none;min-height:70px;}
+.af-inp.sel-inp{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a5a5a'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+.af-row{display:flex;gap:10px;margin-top:10px;}
+.af-row>div{flex:1;}
+.big-btn{width:100%;background:var(--accent);color:#000;border:none;font-family:var(--display);font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;padding:15px;cursor:pointer;border-radius:8px;margin-bottom:14px;transition:opacity .15s;}
+.big-btn:active{opacity:.75;}
+.big-btn:disabled{opacity:.35;}
+.thread-tweet-card{background:var(--s1);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;overflow:hidden;position:relative;}
+.thread-n{position:absolute;left:12px;top:12px;font-size:9px;color:var(--accent);letter-spacing:1px;}
+.thread-ta{width:100%;background:transparent;border:none;color:var(--white);font-family:var(--mono);font-size:14px!important;padding:30px 13px 12px;outline:none;resize:none;min-height:88px;line-height:1.6;}
+.thread-ta::placeholder{color:var(--muted2);}
+.thread-char{font-size:9px;color:var(--muted2);padding:0 13px 9px;text-align:right;}
+.thread-connector{width:2px;height:10px;background:var(--border2);margin:0 auto 6px;border-radius:1px;}
+.thread-action-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.thread-btn{background:var(--s1);border:1px solid var(--border);color:var(--muted2);font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:9px 14px;cursor:pointer;text-transform:uppercase;border-radius:6px;}
+.thread-btn.primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700;}
+
+/* ARTICLE */
+.article-form{background:var(--s1);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px;}
+.af-head{padding:11px 15px;border-bottom:1px solid var(--border);font-size:9px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;}
+.af-fields{padding:15px;display:flex;flex-direction:column;gap:14px;}
+.style-row{display:flex;flex-wrap:wrap;gap:6px;}
+.style-chip{background:var(--bg);border:1px solid var(--border);color:var(--muted2);font-family:var(--mono);font-size:9px;padding:7px 12px;cursor:pointer;letter-spacing:1px;border-radius:4px;user-select:none;}
+.style-chip.on{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700;}
+.article-out{background:var(--s1);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.ao-head{display:flex;align-items:center;justify-content:space-between;padding:11px 15px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:6px;}
+.ao-lbl{font-size:9px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;}
+.ao-acts{display:flex;gap:5px;}
+.ao-body{padding:16px 15px;}
+.article-text{font-size:13px;line-height:1.9;color:var(--white);white-space:pre-wrap;word-break:break-word;outline:none;}
+.ao-foot{padding:8px 15px;border-top:1px solid var(--border);font-size:9px;color:var(--muted2);}
+
+/* HISTORY */
+.hist-filter{display:flex;gap:6px;margin-bottom:13px;overflow-x:auto;}
+.hist-filter::-webkit-scrollbar{display:none;}
+.hf-btn{background:var(--s1);border:1px solid var(--border);color:var(--muted2);font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:6px 13px;cursor:pointer;text-transform:uppercase;border-radius:4px;white-space:nowrap;flex-shrink:0;}
+.hf-btn.active{background:var(--s2);border-color:var(--border2);color:var(--white);}
+.hist-group{margin-bottom:20px;}
+.hist-date{font-size:9px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:8px;}
+.hist-item{background:var(--s1);border:1px solid var(--border);padding:11px 13px;margin-bottom:5px;border-radius:8px;cursor:pointer;}
+.hist-item:active{border-color:var(--border2);}
+.hist-badge{display:inline-block;font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border:1px solid var(--border2);color:var(--muted2);border-radius:3px;margin-bottom:6px;}
+.hist-badge.article{border-color:var(--blue);color:var(--blue);}
+.hist-badge.thread{border-color:var(--orange);color:var(--orange);}
+.hist-slot{font-size:9px;letter-spacing:1px;color:var(--muted2);text-transform:uppercase;margin-bottom:4px;}
+.hist-text{font-size:12px;color:var(--text);line-height:1.55;white-space:pre-wrap;word-break:break-word;}
+.no-hist{font-size:11px;color:var(--muted);text-align:center;padding:48px 0;letter-spacing:.5px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(72px + var(--sb));left:50%;transform:translateX(-50%) translateY(16px);background:var(--s2);border:1px solid var(--border2);color:var(--white);font-family:var(--mono);font-size:11px;padding:10px 20px;border-radius:6px;opacity:0;transition:all .22s;z-index:9000;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+::-webkit-scrollbar{display:none;}
+</style>
+</head>
+<body>
+
+<!-- ═══ API KEY ═══ -->
+<div class="screen" id="sApiKey">
+  <div class="ob-wrap">
+    <div class="ob-eyebrow">X Engine — Setup</div>
+    <div class="ob-title">Let's get<br><span>you set up.</span></div>
+    <div class="ob-sub">Enter your Claude API key.<br>Get it at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com → API Keys</a></div>
+    <div class="step-bar"><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+    <div class="field-wrap">
+      <input type="password" class="field-input" id="apiKeyInp" placeholder="sk-ant-api03-..." autocomplete="off" autocorrect="off" spellcheck="false"/>
+      <button class="field-eye" onclick="toggleEye('apiKeyInp',this)">👁</button>
+    </div>
+    <button class="ob-btn" onclick="submitApiKey()">Continue →</button>
+    <div class="ob-err" id="apiKeyErr"></div>
+    <div class="ob-note">// stored only on this device · never sent anywhere else · only used to call Claude API</div>
+  </div>
+</div>
+
+<!-- ═══ SET PASSCODE ═══ -->
+<div class="screen hidden" id="sSetPass">
+  <div class="pin-wrap">
+    <div class="ob-eyebrow" style="text-align:center;margin-bottom:10px">Step 2 of 3</div>
+    <div class="pin-title">Set your<br>passcode</div>
+    <div class="pin-sub">Choose a 4-digit PIN.</div>
+    <div class="pin-dots" id="setPassDots"><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div></div>
+    <div class="pin-keypad" id="setPassKP"></div>
+  </div>
+</div>
+
+<!-- ═══ CONFIRM PASSCODE ═══ -->
+<div class="screen hidden" id="sConfirmPass">
+  <div class="pin-wrap">
+    <div class="ob-eyebrow" style="text-align:center;margin-bottom:10px">Step 3 of 3</div>
+    <div class="pin-title">Confirm<br>passcode</div>
+    <div class="pin-sub">Enter PIN again.</div>
+    <div class="pin-dots" id="confirmDots"><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div></div>
+    <div class="pin-keypad" id="confirmKP"></div>
+    <div class="ob-err" id="confirmErr" style="text-align:center;margin-top:14px"></div>
+  </div>
+</div>
+
+<!-- ═══ ENTER PASSCODE ═══ -->
+<div class="screen hidden" id="sEnterPass">
+  <div class="pin-wrap">
+    <div class="pin-title">X Engine</div>
+    <div class="pin-sub" id="enterPassSub">Enter your passcode.</div>
+    <div class="pin-dots" id="enterDots"><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div></div>
+    <div class="pin-keypad" id="enterKP"></div>
+    <div class="pin-links">
+      <span class="pin-link" onclick="showForgotPass()">Forgot passcode?</span>
+      <span class="pin-link" onclick="showForgotApiKey()">Forgot API key?</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FORGOT PASSCODE (verify API key) ═══ -->
+<div class="screen hidden" id="sForgotPass">
+  <div class="ob-wrap">
+    <div class="ob-title" style="font-size:28px">Reset<br><span>passcode</span></div>
+    <div class="ob-sub" style="margin-bottom:22px">Enter your API key to verify it's you. Then you'll set a new passcode.</div>
+    <div class="field-wrap">
+      <input type="password" class="field-input" id="resetPassApiInp" placeholder="sk-ant-api03-..." autocomplete="off"/>
+      <button class="field-eye" onclick="toggleEye('resetPassApiInp',this)">👁</button>
+    </div>
+    <button class="ob-btn" onclick="verifyForgotPass()">Verify & Reset</button>
+    <button class="ob-btn sec" onclick="showScreen('sEnterPass')">Cancel</button>
+    <div class="ob-err" id="forgotPassErr"></div>
+  </div>
+</div>
+
+<!-- ═══ FORGOT API KEY (clear everything) ═══ -->
+<div class="screen hidden" id="sForgotApiKey">
+  <div class="ob-wrap">
+    <div class="ob-title" style="font-size:28px">Change<br><span>API key</span></div>
+    <div class="ob-sub" style="margin-bottom:22px">Enter a new API key. Your passcode and saved data will stay the same.</div>
+    <div class="field-wrap">
+      <input type="password" class="field-input" id="newApiKeyInp" placeholder="sk-ant-api03-..." autocomplete="off"/>
+      <button class="field-eye" onclick="toggleEye('newApiKeyInp',this)">👁</button>
+    </div>
+    <button class="ob-btn" onclick="submitNewApiKey()">Save New API Key →</button>
+    <button class="ob-btn sec" onclick="showScreen('sEnterPass')">Cancel</button>
+    <div class="ob-err" id="newApiKeyErr"></div>
+  </div>
+</div>
+
+<!-- ═══ MAIN APP ═══ -->
+<div class="screen hidden" id="sApp">
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="topbar-title">X<span>Engine</span></div>
+      <div class="topbar-r">
+        <div class="streak-pill">🔥 <span id="streakTop">0</span></div>
+        <button class="tb-btn" onclick="lockApp()">lock</button>
+      </div>
+    </div>
+    <div class="tabbar">
+      <button class="tab-btn active" onclick="switchTab('tweets')" id="tab-tweets">tweets</button>
+      <button class="tab-btn" onclick="switchTab('thread')" id="tab-thread">thread</button>
+      <button class="tab-btn" onclick="switchTab('article')" id="tab-article">article</button>
+      <button class="tab-btn" onclick="switchTab('streak')" id="tab-streak">streak</button>
+      <button class="tab-btn" onclick="switchTab('history')" id="tab-history">history</button>
+    </div>
+    <div class="tab-content">
+
+      <!-- TWEETS -->
+      <div class="tab-panel active" id="panel-tweets">
+        <div class="slabel">// thought bank</div>
+        <div class="thought-bank">
+          <div class="tb-head">
+            <span class="tb-head-title">Saved thoughts — tap to use</span>
+            <span style="font-size:9px;color:var(--accent)" id="thoughtLbl"></span>
+          </div>
+          <div class="tb-input-row">
+            <textarea class="tb-textarea" id="newThoughtInp" placeholder="drop a raw thought..." rows="2"></textarea>
+            <button class="tb-add-btn" onclick="saveThought()">+</button>
+          </div>
+          <div class="saved-thoughts" id="savedThoughts"><div class="no-thoughts">// no thoughts saved yet</div></div>
+        </div>
+        <div class="thought-notice" id="thoughtNotice">// thought selected — topics skipped</div>
+        <div class="slabel">// topics</div>
+        <div class="chip-row" id="topicRow">
+          <button class="chip on" data-t="AI / Future of Tech">AI / Tech</button>
+          <button class="chip on" data-t="Startups & Building">Startups</button>
+          <button class="chip on" data-t="Sci-fi & Creative">Sci-fi</button>
+          <button class="chip on" data-t="Student life & hustle">Student</button>
+          <button class="chip on" data-t="Random thought">Random</button>
+        </div>
+        <div class="slabel">// tone</div>
+        <div class="tone-row">
+          <button class="tone-chip on" data-tone="sharp & philosophical">sharp</button>
+          <button class="tone-chip" data-tone="dark humor">dark humor</button>
+          <button class="tone-chip" data-tone="raw & honest">raw</button>
+          <button class="tone-chip" data-tone="quiet observation">quiet</button>
+          <button class="tone-chip" data-tone="contrarian take">contrarian</button>
+        </div>
+        <div class="gen-row">
+          <button class="gen-btn" id="genBtn" onclick="generateAll()">Generate 5 Posts</button>
+          <button class="regen-btn" id="regenAllBtn" onclick="regenAll()" style="display:none">↺ All</button>
+        </div>
+        <div id="slotsGrid"></div>
+      </div>
+
+      <!-- THREAD -->
+      <div class="tab-panel" id="panel-thread">
+        <div class="slabel">// thread builder</div>
+        <div class="thread-form">
+          <div class="af-label">Thread topic</div>
+          <input type="text" class="af-inp" id="threadTopic" placeholder="e.g. Why digital inequality is already here"/>
+          <div style="margin-top:12px"><div class="af-label">Your angle (optional)</div>
+          <textarea class="af-inp" id="threadAngle" placeholder="Your raw take..."></textarea></div>
+          <div class="af-row">
+            <div><div class="af-label">Tweets</div>
+            <select class="af-inp sel-inp" id="threadCount">
+              <option value="3">3 tweets</option><option value="5" selected>5 tweets</option>
+              <option value="7">7 tweets</option><option value="10">10 tweets</option>
+            </select></div>
+            <div><div class="af-label">Tone</div>
+            <select class="af-inp sel-inp" id="threadTone">
+              <option>sharp & philosophical</option><option>dark humor</option>
+              <option>raw & honest</option><option>contrarian take</option>
+            </select></div>
+          </div>
+        </div>
+        <button class="big-btn" id="genThreadBtn" onclick="generateThread()">Generate Thread</button>
+        <div id="threadOut"></div>
+      </div>
+
+      <!-- ARTICLE -->
+      <div class="tab-panel" id="panel-article">
+        <div class="slabel">// x article</div>
+        <div class="article-form">
+          <div class="af-head">Article settings</div>
+          <div class="af-fields">
+            <div><div class="af-label">Topic / title idea</div>
+            <input type="text" class="af-inp" id="articleTopic" placeholder="e.g. Why digital inequality is the real AI problem"/></div>
+            <div><div class="af-label">Your angle (optional)</div>
+            <textarea class="af-inp" id="articleAngle" placeholder="Your raw thought..."></textarea></div>
+            <div class="af-row">
+              <div><div class="af-label">Length</div>
+              <select class="af-inp sel-inp" id="articleLength">
+                <option value="short">~400 words</option><option value="medium" selected>~700 words</option><option value="long">~1200 words</option>
+              </select></div>
+              <div><div class="af-label">Tone</div>
+              <select class="af-inp sel-inp" id="articleTone">
+                <option>sharp & philosophical</option><option>dark humor</option>
+                <option>raw & honest</option><option>contrarian take</option><option>quiet observation</option>
+              </select></div>
+            </div>
+            <div><div class="af-label">Style</div>
+            <div class="style-row" id="styleRow">
+              <button class="style-chip on" data-style="personal essay">personal essay</button>
+              <button class="style-chip" data-style="opinion piece">opinion</button>
+              <button class="style-chip" data-style="storytelling">storytelling</button>
+              <button class="style-chip" data-style="manifesto">manifesto</button>
+              <button class="style-chip" data-style="technical breakdown">technical</button>
+            </div></div>
+          </div>
+        </div>
+        <button class="big-btn" id="genArticleBtn" onclick="generateArticle()">Generate Article</button>
+        <div class="article-out" id="articleOut" style="display:none">
+          <div class="ao-head">
+            <span class="ao-lbl">// article</span>
+            <div class="ao-acts">
+              <button class="fbt" onclick="generateArticle()">↺</button>
+              <button class="fbt" onclick="saveArticleToHistory()">save</button>
+              <button class="fbt" id="copyArticleBtn" onclick="copyArticle()">copy</button>
+            </div>
+          </div>
+          <div class="ao-body"><div class="article-text" id="articleContent" contenteditable="true"></div></div>
+          <div class="ao-foot" id="articleWC"></div>
+        </div>
+      </div>
+
+      <!-- STREAK -->
+      <div class="tab-panel" id="panel-streak">
+        <div class="slabel">// posting streak</div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-n" id="sCurrent">0</div><div class="stat-l">current</div></div>
+          <div class="stat-card"><div class="stat-n" id="sBest">0</div><div class="stat-l">best streak</div></div>
+          <div class="stat-card"><div class="stat-n" id="sTotal">0</div><div class="stat-l">days posted</div></div>
+          <div class="stat-card"><div class="stat-n" id="sWeek">0</div><div class="stat-l">this week</div></div>
+        </div>
+        <div class="streak-card">
+          <div class="streak-n" id="streakBig">0</div>
+          <div class="streak-l">day streak 🔥</div>
+          <div class="streak-sub" id="streakMsg">Start your streak today.</div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+        <button class="streak-mark" id="markBtn" onclick="markPosted()">Mark Today as Posted ✓</button>
+      </div>
+
+      <!-- HISTORY -->
+      <div class="tab-panel" id="panel-history">
+        <div class="slabel">// saved history</div>
+        <div class="hist-filter">
+          <button class="hf-btn active" onclick="filterHist('all',this)">all</button>
+          <button class="hf-btn" onclick="filterHist('tweet',this)">tweets</button>
+          <button class="hf-btn" onclick="filterHist('thread',this)">threads</button>
+          <button class="hf-btn" onclick="filterHist('article',this)">articles</button>
+        </div>
+        <div id="histList"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──
+let API_KEY = '';
+let tweetData = Array(5).fill('');
+let selThought = -1;
+let thoughts = [];
+let histLog = [];
+let postedDays = [];
+let articleText = '';
+let threadTweets = [];
+let histFilter = 'all';
+let tempPin = '';
+
+try { thoughts = JSON.parse(localStorage.getItem('xe_t')||'[]'); } catch(e){}
+try { histLog = JSON.parse(localStorage.getItem('xe_h')||'[]'); } catch(e){}
+try { postedDays = JSON.parse(localStorage.getItem('xe_p')||'[]'); } catch(e){}
+
+const SLOTS = [
+  {time:'7–9 AM',tag:'Morning hook'},
+  {time:'1–3 PM',tag:'Afternoon take'},
+  {time:'4–6 PM',tag:'Mid-day thought'},
+  {time:'6–9 PM',tag:'Evening post'},
+  {time:'10 PM+',tag:'Late night'},
+];
+
+// ── SCREENS ──
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+function initApp(){
+  const key = localStorage.getItem('xe_key');
+  const pass = localStorage.getItem('xe_pin');
+  if(!key){ showScreen('sApiKey'); return; }
+  if(!pass){ API_KEY=key; showScreen('sSetPass'); buildKP('setPassKP',handleSetPass); return; }
+  API_KEY = key;
+  showScreen('sEnterPass');
+  buildKP('enterKP', handleEnterPass);
+}
+
+// ── ONBOARDING: API KEY ──
+function toggleEye(id,btn){
+  const inp=document.getElementById(id);
+  inp.type = inp.type==='password'?'text':'password';
+  btn.textContent = inp.type==='password'?'👁':'🙈';
+}
+function submitApiKey(){
+  const val=document.getElementById('apiKeyInp').value.trim();
+  if(!val.startsWith('sk-ant-')){
+    document.getElementById('apiKeyErr').textContent='Key must start with sk-ant-';
+    return;
+  }
+  localStorage.setItem('xe_key',val);
+  API_KEY = val;
+  document.getElementById('apiKeyErr').textContent='';
+  showScreen('sSetPass');
+  buildKP('setPassKP',handleSetPass);
+}
+document.getElementById('apiKeyInp').addEventListener('keydown',e=>{if(e.key==='Enter')submitApiKey();});
+
+// ── FORGOT PASSCODE (verify by API key) ──
+function showForgotPass(){ showScreen('sForgotPass'); }
+function verifyForgotPass(){
+  const val=document.getElementById('resetPassApiInp').value.trim();
+  const stored=localStorage.getItem('xe_key');
+  if(val===stored){
+    localStorage.removeItem('xe_pin');
+    tempPin='';
+    document.getElementById('resetPassApiInp').value='';
+    document.getElementById('forgotPassErr').textContent='';
+    showScreen('sSetPass');
+    buildKP('setPassKP',handleSetPass);
+  } else {
+    document.getElementById('forgotPassErr').textContent='API key doesn\'t match.';
+  }
+}
+
+// ── FORGOT API KEY (enter new key) ──
+function showForgotApiKey(){ showScreen('sForgotApiKey'); }
+function submitNewApiKey(){
+  const val=document.getElementById('newApiKeyInp').value.trim();
+  if(!val.startsWith('sk-ant-')){
+    document.getElementById('newApiKeyErr').textContent='Key must start with sk-ant-';
+    return;
+  }
+  localStorage.setItem('xe_key',val);
+  API_KEY = val;
+  document.getElementById('newApiKeyInp').value='';
+  document.getElementById('newApiKeyErr').textContent='';
+  // if passcode already exists go to passcode screen, else set new one
+  const pass=localStorage.getItem('xe_pin');
+  if(pass){
+    showScreen('sEnterPass');
+    buildKP('enterKP',handleEnterPass);
+    showToast('API key updated!');
+  } else {
+    showScreen('sSetPass');
+    buildKP('setPassKP',handleSetPass);
+  }
+}
+
+// ── PIN ──
+function buildKP(id, handler){
+  const c=document.getElementById(id); c.innerHTML='';
+  ['1','2','3','4','5','6','7','8','9','','0','⌫'].forEach(k=>{
+    const btn=document.createElement('button');
+    btn.className='pin-key'+(k===''?' ghost':k==='⌫'?' del':'');
+    btn.textContent=k;
+    if(k!=='') btn.addEventListener('click',()=>{
+      btn.classList.add('pressed');
+      setTimeout(()=>btn.classList.remove('pressed'),100);
+      handler(k);
+    });
+    c.appendChild(btn);
+  });
+}
+let setBuf='';
+function handleSetPass(k){
+  if(k==='⌫'){setBuf=setBuf.slice(0,-1);}
+  else if(setBuf.length<4){setBuf+=k;}
+  updateDots('setPassDots',setBuf.length);
+  if(setBuf.length===4){
+    tempPin=setBuf; setBuf='';
+    setTimeout(()=>{ showScreen('sConfirmPass'); buildKP('confirmKP',handleConfirmPass); },180);
+  }
+}
+let confBuf='';
+function handleConfirmPass(k){
+  if(k==='⌫'){confBuf=confBuf.slice(0,-1);}
+  else if(confBuf.length<4){confBuf+=k;}
+  updateDots('confirmDots',confBuf.length);
+  if(confBuf.length===4){
+    if(confBuf===tempPin){
+      localStorage.setItem('xe_pin',tempPin);
+      confBuf='';
+      setTimeout(()=>openApp(),180);
+    } else {
+      confBuf='';
+      document.getElementById('confirmErr').textContent='PINs don\'t match. Try again.';
+      shakeDots('confirmDots'); updateDots('confirmDots',0,true);
+      setTimeout(()=>{ document.getElementById('confirmErr').textContent=''; updateDots('confirmDots',0); },900);
+    }
+  }
+}
+let entBuf=''; let wrongTries=0;
+function handleEnterPass(k){
+  if(k==='⌫'){entBuf=entBuf.slice(0,-1);}
+  else if(entBuf.length<4){entBuf+=k;}
+  updateDots('enterDots',entBuf.length);
+  if(entBuf.length===4){
+    const stored=localStorage.getItem('xe_pin');
+    if(entBuf===stored){
+      entBuf=''; wrongTries=0;
+      setTimeout(()=>openApp(),180);
+    } else {
+      entBuf=''; wrongTries++;
+      shakeDots('enterDots'); updateDots('enterDots',0,true);
+      const sub=document.getElementById('enterPassSub');
+      sub.textContent=wrongTries>=3?`Wrong PIN (${wrongTries}x). Forgot it?`:'Wrong passcode. Try again.';
+      setTimeout(()=>updateDots('enterDots',0),650);
+    }
+  }
+}
+function updateDots(id,count,err=false){
+  document.querySelectorAll(`#${id} .pin-dot`).forEach((d,i)=>{
+    d.classList.toggle('filled',i<count&&!err);
+    d.classList.toggle('error',i<count&&err);
+  });
+}
+function shakeDots(id){
+  const el=document.getElementById(id);
+  el.classList.add('shake');
+  setTimeout(()=>el.classList.remove('shake'),450);
+}
+
+// ── OPEN APP ──
+function openApp(){
+  showScreen('sApp');
+  renderThoughts(); renderSlots(); renderStreak(); renderHist(); updateStreakTop();
+}
+function lockApp(){
+  entBuf=''; updateDots('enterDots',0);
+  document.getElementById('enterPassSub').textContent='Enter your passcode.';
+  showScreen('sEnterPass');
+  buildKP('enterKP',handleEnterPass);
+}
+
+// ── TABS ──
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+  if(name==='streak') renderStreak();
+  if(name==='history') renderHist();
+}
+
+// ── THOUGHT BANK ──
+document.getElementById('newThoughtInp').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();saveThought();}
+});
+function saveThought(){
+  const inp=document.getElementById('newThoughtInp');
+  const v=inp.value.trim(); if(!v)return;
+  thoughts.unshift(v);
+  localStorage.setItem('xe_t',JSON.stringify(thoughts));
+  inp.value=''; renderThoughts();
+}
+function delThought(i){
+  if(selThought===i){selThought=-1;updateThoughtLbl();}
+  else if(selThought>i) selThought--;
+  thoughts.splice(i,1);
+  localStorage.setItem('xe_t',JSON.stringify(thoughts));
+  renderThoughts(); updateTopicDim();
+}
+function selThoughtFn(i){
+  selThought = selThought===i ? -1 : i;
+  updateThoughtLbl(); renderThoughts(); updateTopicDim();
+}
+function updateThoughtLbl(){
+  document.getElementById('thoughtLbl').textContent=selThought>=0?'✓ selected':'';
+}
+function updateTopicDim(){
+  const has=selThought>=0;
+  document.getElementById('topicRow').classList.toggle('dim',has);
+  document.getElementById('thoughtNotice').classList.toggle('show',has);
+}
+function renderThoughts(){
+  const el=document.getElementById('savedThoughts');
+  if(!thoughts.length){el.innerHTML='<div class="no-thoughts">// no thoughts saved yet</div>';return;}
+  el.innerHTML=thoughts.map((t,i)=>`
+    <div class="thought-item${selThought===i?' sel':''}" onclick="selThoughtFn(${i})">
+      <span class="t-preview">${esc(t)}</span>
+      <button class="t-del" onclick="event.stopPropagation();delThought(${i})">✕</button>
+    </div>`).join('');
+}
+
+// ── CHIPS ──
+document.getElementById('topicRow').addEventListener('click',e=>{if(e.target.classList.contains('chip'))e.target.classList.toggle('on');});
+document.querySelector('.tone-row').addEventListener('click',e=>{
+  if(e.target.classList.contains('tone-chip')){
+    document.querySelectorAll('.tone-chip').forEach(c=>c.classList.remove('on'));
+    e.target.classList.add('on');
+  }
+});
+document.getElementById('styleRow').addEventListener('click',e=>{
+  if(e.target.classList.contains('style-chip')){
+    document.querySelectorAll('.style-chip').forEach(c=>c.classList.remove('on'));
+    e.target.classList.add('on');
+  }
+});
+function getTopics(){return[...document.querySelectorAll('.chip.on')].map(c=>c.dataset.t);}
+function getTone(){const el=document.querySelector('.tone-chip.on');return el?el.dataset.tone:'sharp & philosophical';}
+function getStyle(){const el=document.querySelector('.style-chip.on');return el?el.dataset.style:'personal essay';}
+
+// ── TWEET SLOTS ──
+function renderSlots(){
+  document.getElementById('slotsGrid').innerHTML=SLOTS.map((_,i)=>buildSlot(i)).join('');
+}
+function buildSlot(i){
+  const s=SLOTS[i],text=tweetData[i];
+  return `<div class="slot" id="slot-${i}">
+    <div class="slot-head"><span class="slot-time">${s.time}</span><span class="slot-tag">${s.tag}</span></div>
+    <div class="slot-body" id="sb-${i}">${text?`<div class="tweet-text" id="tw-${i}" contenteditable="true" oninput="onEdit(${i})">${esc(text)}</div>`:'<div class="slot-empty">// waiting to generate</div>'}</div>
+    ${text?buildFoot(i):''}
+  </div>`;
+}
+function buildFoot(i){
+  const len=tweetData[i].length;
+  const pct=Math.min((len/280)*100,100);
+  const fill=len>280?'#ff4444':len>250?'#fb923c':'var(--accent)';
+  const vs=tweetData[i]._vs!==undefined?`<span class="vscore ${vsClass(tweetData[i]._vs)}">${tweetData[i]._vs}/10</span>`:'';
+  return `<div class="slot-foot" id="sf-${i}">
+    <div class="char-wrap"><div class="char-bar"><div class="char-fill" id="cb-${i}" style="width:${pct}%;background:${fill}"></div></div>
+    <span class="char-num${len>250?' warn':''}" id="cn-${i}">${len}/280</span>${vs}</div>
+    <div class="foot-btns">
+      <button class="fbt" id="sc-${i}" onclick="scoreOne(${i})">score</button>
+      <button class="fbt" id="rd-${i}" onclick="regenOne(${i})">↺</button>
+      <button class="fbt" id="pt-${i}" onclick="markPostedTweet(${i})">posted</button>
+      <button class="fbt" id="cp-${i}" onclick="copyTweet(${i})">copy</button>
+    </div></div>`;
+}
+function vsClass(s){return s>=8?'vs-hot':s>=6?'vs-good':s>=4?'vs-ok':'vs-low';}
+function setLoading(i){
+  document.getElementById(`sb-${i}`).innerHTML=`<div class="slot-loading"><span class="ld"></span><span class="ld"></span><span class="ld"></span></div>`;
+  const f=document.getElementById(`sf-${i}`);if(f)f.remove();
+}
+function updateSlot(i){
+  const body=document.getElementById(`sb-${i}`); if(!body)return;
+  body.innerHTML=`<div class="tweet-text" id="tw-${i}" contenteditable="true" oninput="onEdit(${i})">${esc(tweetData[i])}</div>`;
+  const of=document.getElementById(`sf-${i}`);if(of)of.remove();
+  document.getElementById(`slot-${i}`).insertAdjacentHTML('beforeend',buildFoot(i));
+}
+function onEdit(i){
+  const el=document.getElementById(`tw-${i}`);if(!el)return;
+  tweetData[i]=el.innerText;
+  const len=tweetData[i].length,pct=Math.min((len/280)*100,100);
+  const fill=len>280?'#ff4444':len>250?'#fb923c':'var(--accent)';
+  const b=document.getElementById(`cb-${i}`);const c=document.getElementById(`cn-${i}`);
+  if(b){b.style.width=pct+'%';b.style.background=fill;}
+  if(c){c.textContent=`${len}/280`;c.className=`char-num${len>250?' warn':''}`;}
+}
+function copyTweet(i){
+  navigator.clipboard.writeText(tweetData[i]).then(()=>{
+    const btn=document.getElementById(`cp-${i}`);
+    btn.textContent='✓';btn.classList.add('ok');
+    setTimeout(()=>{btn.textContent='copy';btn.classList.remove('ok');},1800);
+  });
+}
+function markPostedTweet(i){
+  const btn=document.getElementById(`pt-${i}`);
+  btn.textContent='✓ done';btn.classList.add('done');
+  saveToHist(i,'tweet'); markTodayPosted(); showToast('Posted 🔥');
+}
+
+// ── GENERATE ──
+async function generateAll(){
+  const topics=getTopics(),hasT=selThought>=0;
+  if(!hasT&&!topics.length){showToast('Pick a topic or select a thought');return;}
+  const btn=document.getElementById('genBtn');
+  btn.disabled=true; btn.textContent='Generating...';
+  tweetData=Array(5).fill('');
+  renderSlots(); SLOTS.forEach((_,i)=>setLoading(i));
+  await Promise.all(SLOTS.map(async(_,i)=>{
+    try{tweetData[i]=await callTweet(i,topics,getTone());}
+    catch(e){tweetData[i]='// failed — tap ↺';}
+    updateSlot(i);
+  }));
+  btn.disabled=false; btn.textContent='Generate 5 Posts';
+  document.getElementById('regenAllBtn').style.display='block';
+}
+async function regenAll(){
+  const topics=getTopics(),hasT=selThought>=0;
+  if(!hasT&&!topics.length)return;
+  const rb=document.getElementById('regenAllBtn'),gb=document.getElementById('genBtn');
+  rb.disabled=true; gb.disabled=true; rb.textContent='↺...';
+  SLOTS.forEach((_,i)=>setLoading(i));
+  await Promise.all(SLOTS.map(async(_,i)=>{
+    try{tweetData[i]=await callTweet(i,topics,getTone());}
+    catch(e){tweetData[i]='// failed — tap ↺';}
+    updateSlot(i);
+  }));
+  rb.disabled=false; gb.disabled=false; rb.textContent='↺ All';
+}
+async function regenOne(i){
+  const topics=getTopics(),hasT=selThought>=0;
+  if(!hasT&&!topics.length)return;
+  const btn=document.getElementById(`rd-${i}`);if(btn)btn.disabled=true;
+  setLoading(i);
+  try{tweetData[i]=await callTweet(i,topics,getTone());}
+  catch(e){tweetData[i]='// failed — try again';}
+  updateSlot(i);
+}
+async function scoreOne(i){
+  const btn=document.getElementById(`sc-${i}`);
+  if(!btn||!tweetData[i])return;
+  btn.disabled=true; btn.textContent='...';
+  try{
+    const r=await callAPI(
+      'You are a viral tweet scorer.',
+      `Rate this tweet's viral potential 1-10. Consider: hook, shareability, emotion, originality. Author is @adityanayak_ — tech/AI/philosophy niche, Indian student. Reply ONLY with a single digit 1-10.\n\nTweet: "${tweetData[i]}"`,
+      30
+    );
+    const score=parseInt(r.trim());
+    if(!isNaN(score)&&score>=1&&score<=10){
+      tweetData[i]._vs=score;
+      const of=document.getElementById(`sf-${i}`);if(of)of.remove();
+      document.getElementById(`slot-${i}`).insertAdjacentHTML('beforeend',buildFoot(i));
+    }
+  }catch(e){}
+  const nb=document.getElementById(`sc-${i}`);if(nb)nb.disabled=false;
+}
+async function callTweet(idx,topics,tone){
+  const slot=SLOTS[idx];
+  const hasT=selThought>=0;
+  const raw=hasT?thoughts[selThought]:'';
+  const sys=`You are a ghostwriter for @adityanayak_ on X (Twitter).
+Voice: raw, philosophical, short punchy takes. No emojis. No hashtags. Real human thinking out loud.
+Background: IT student India, building startups, AI/sci-fi/tech, national-level skater, IEEE chapter leader, created "Lag: The Human Disconnect" (Netropolis sci-fi concept).
+STRICT RULES: 1-4 lines max · no emojis · no hashtags · lowercase is fine · NEVER start with "I" · NEVER use: just, literally, actually, honestly, reminder · end with silence not a CTA · never sound like LinkedIn.
+Tone: ${tone}`;
+  const usr=`Write ONE tweet for the ${slot.time} slot (${slot.tag}).
+${hasT?`Raw thought to expand: "${raw}"`:`Topics (pick one angle): ${topics.join(', ')}`}
+Return ONLY the tweet text. No quotes. No explanation. No preamble.`;
+  return callAPI(sys,usr,300);
+}
+
+// ── THREAD ──
+async function generateThread(){
+  const topic=document.getElementById('threadTopic').value.trim();
+  if(!topic){showToast('Enter a thread topic');return;}
+  const btn=document.getElementById('genThreadBtn');
+  btn.disabled=true; btn.textContent='Building thread...';
+  const count=parseInt(document.getElementById('threadCount').value);
+  const tone=document.getElementById('threadTone').value;
+  const angle=document.getElementById('threadAngle').value.trim();
+  const out=document.getElementById('threadOut');
+  out.innerHTML=`<div style="display:flex;align-items:center;gap:8px;padding:20px 0;font-size:11px;color:var(--muted2)"><span class="ld"></span><span class="ld"></span><span class="ld"></span><span style="margin-left:6px">building thread...</span></div>`;
+  const sys=`You are a ghostwriter for @adityanayak_ writing an X thread.
+Voice: raw, philosophical, punchy. No emojis. No hashtags. Real human.
+Background: IT student India, startups, AI/sci-fi, created "Lag: The Human Disconnect".
+Thread rules: each tweet 1-3 lines · no emojis/hashtags · first tweet is the hook · last tweet ends with quiet punch, not CTA · tweets must flow together.
+Tone: ${tone}`;
+  const usr=`Write a ${count}-tweet thread about: "${topic}"
+${angle?`My angle: "${angle}"`:''}
+Format as JSON array ONLY: ["tweet1","tweet2",...]
+Return ONLY valid JSON. Nothing else.`;
+  try{
+    const raw=await callAPI(sys,usr,2000);
+    const clean=raw.replace(/```json/g,'').replace(/```/g,'').trim();
+    threadTweets=JSON.parse(clean);
+    renderThreadOut();
+  }catch(e){
+    out.innerHTML=`<div style="color:var(--red);font-size:11px;padding:16px 0">// failed — try again</div>`;
+  }
+  btn.disabled=false; btn.textContent='Generate Thread';
+}
+function renderThreadOut(){
+  const out=document.getElementById('threadOut');
+  if(!threadTweets.length){out.innerHTML='';return;}
+  out.innerHTML=`<div class="thread-action-row">
+    <button class="thread-btn primary" onclick="copyThread()">Copy All</button>
+    <button class="thread-btn" onclick="saveThreadToHist()">Save</button>
+  </div>
+  ${threadTweets.map((t,i)=>`
+    <div class="thread-tweet-card">
+      <span class="thread-n">${i+1}/${threadTweets.length}</span>
+      <textarea class="thread-ta" oninput="threadTweets[${i}]=this.value;updTC(${i})" id="tta-${i}">${t}</textarea>
+      <div class="thread-char" id="tc-${i}">${t.length}/280</div>
+    </div>
+    ${i<threadTweets.length-1?'<div class="thread-connector"></div>':''}`).join('')}`;
+}
+function updTC(i){const el=document.getElementById(`tc-${i}`);if(el){const v=threadTweets[i]||'';el.textContent=`${v.length}/280`;el.style.color=v.length>250?'var(--red)':'var(--muted2)';}}
+function copyThread(){
+  navigator.clipboard.writeText(threadTweets.map((t,i)=>`${i+1}/${threadTweets.length}\n${t}`).join('\n\n'))
+    .then(()=>showToast('Thread copied!'));
+}
+function saveThreadToHist(){
+  const today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  histLog.unshift({date:today,type:'thread',slot:'Thread',time:'',text:threadTweets.join('\n\n---\n\n')});
+  persist(); showToast('Thread saved!');
+}
+
+// ── ARTICLE ──
+async function generateArticle(){
+  const topic=document.getElementById('articleTopic').value.trim();
+  if(!topic){showToast('Enter a topic');return;}
+  const btn=document.getElementById('genArticleBtn');
+  btn.disabled=true; btn.textContent='Writing...';
+  const out=document.getElementById('articleOut'); out.style.display='block';
+  const content=document.getElementById('articleContent');
+  content.innerHTML=`<div style="display:flex;align-items:center;gap:8px"><span class="ld"></span><span class="ld"></span><span class="ld"></span><span style="font-size:11px;color:var(--muted2);margin-left:8px">writing...</span></div>`;
+  const angle=document.getElementById('articleAngle').value.trim();
+  const length=document.getElementById('articleLength').value;
+  const tone=document.getElementById('articleTone').value;
+  const style=getStyle();
+  const lenMap={short:'350-450 words',medium:'650-800 words',long:'1100-1300 words'};
+  const sys=`You are a ghostwriter for @adityanayak_ writing an X Article.
+Voice: raw, philosophical, punchy. No fluff. No emojis. No hashtags. Real human.
+Background: IT student India, startups, AI/sci-fi, created "Lag: The Human Disconnect".
+Rules: style=${style} · tone=${tone} · ${lenMap[length]} · short paragraphs · no headers unless essential · no bullets · strong opening line · ending that lingers, no CTA.`;
+  const usr=`Write an X Article: "${topic}"\n${angle?`Angle: "${angle}"`:''}
+
+Return only the article text. No titles, no preamble.`;
+  try{
+    articleText=await callAPI(sys,usr,2000);
+    content.innerHTML=esc(articleText);
+    content.contentEditable='true';
+    content.oninput=()=>{articleText=content.innerText;updWC();};
+    updWC();
+  }catch(e){
+    content.innerHTML=`<span style="color:var(--red)">// failed — try again</span>`;
+  }
+  btn.disabled=false; btn.textContent='Generate Article';
+}
+function updWC(){
+  const w=articleText.trim().split(/\s+/).filter(Boolean).length;
+  document.getElementById('articleWC').textContent=`${w} words`;
+}
+function copyArticle(){
+  navigator.clipboard.writeText(articleText).then(()=>{
+    const btn=document.getElementById('copyArticleBtn');
+    btn.textContent='✓ copied';btn.classList.add('ok');
+    setTimeout(()=>{btn.textContent='copy';btn.classList.remove('ok');},1800);
+  });
+}
+function saveArticleToHistory(){
+  const today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  const topic=document.getElementById('articleTopic').value.trim();
+  histLog.unshift({date:today,type:'article',slot:topic||'Article',time:'',text:articleText});
+  persist(); showToast('Article saved!');
+}
+
+// ── STREAK ──
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function markTodayPosted(){
+  const today=todayStr();
+  if(!postedDays.includes(today)){postedDays.push(today);localStorage.setItem('xe_p',JSON.stringify(postedDays));}
+  renderStreak(); updateStreakTop();
+}
+function markPosted(){
+  markTodayPosted();
+  const btn=document.getElementById('markBtn');
+  btn.textContent='Posted today ✓'; btn.disabled=true;
+  showToast('Streak updated! 🔥');
+}
+function calcStreak(){
+  const set=new Set(postedDays);
+  let streak=0; const d=new Date();
+  for(let i=0;i<365;i++){
+    if(set.has(d.toISOString().slice(0,10))){streak++;}
+    else if(i>0){break;}
+    d.setDate(d.getDate()-1);
+  }
+  return streak;
+}
+function calcBest(){
+  const sorted=[...new Set(postedDays)].sort();
+  let best=0,cur=0,prev=null;
+  sorted.forEach(d=>{
+    if(prev){const diff=(new Date(d)-new Date(prev))/(86400000);if(diff===1){cur++;}else{best=Math.max(best,cur);cur=1;}}
+    else{cur=1;} prev=d;
+  });
+  return Math.max(best,cur);
+}
+function renderStreak(){
+  const streak=calcStreak(),best=calcBest(),total=new Set(postedDays).size;
+  const today=todayStr();
+  let week=0;
+  for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);if(postedDays.includes(d.toISOString().slice(0,10)))week++;}
+  document.getElementById('streakBig').textContent=streak;
+  document.getElementById('sCurrent').textContent=streak;
+  document.getElementById('sBest').textContent=best;
+  document.getElementById('sTotal').textContent=total;
+  document.getElementById('sWeek').textContent=week;
+  document.getElementById('streakMsg').textContent=streak>0?`${streak} day${streak>1?'s':''} in a row. Keep going.`:'Mark today as posted to start.';
+  const grid=document.getElementById('calGrid');
+  const days=['S','M','T','W','T','F','S'];
+  let html=days.map(d=>`<div class="cal-lbl">${d}</div>`).join('');
+  const first=new Date(); first.setDate(first.getDate()-27);
+  for(let p=0;p<first.getDay();p++) html+='<div></div>';
+  for(let i=0;i<28;i++){
+    const d=new Date(); d.setDate(d.getDate()-(27-i));
+    const ds=d.toISOString().slice(0,10);
+    html+=`<div class="cal-day${postedDays.includes(ds)?' hit':''}${ds===today?' today':''}"></div>`;
+  }
+  grid.innerHTML=html;
+  const btn=document.getElementById('markBtn');
+  if(postedDays.includes(today)){btn.textContent='Posted today ✓';btn.disabled=true;}
+  else{btn.textContent='Mark Today as Posted ✓';btn.disabled=false;}
+}
+function updateStreakTop(){document.getElementById('streakTop').textContent=calcStreak();}
+
+// ── HISTORY ──
+function saveToHist(i,type){
+  const today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  histLog.unshift({date:today,type,slot:SLOTS[i].tag,time:SLOTS[i].time,text:tweetData[i]});
+  if(histLog.length>300)histLog=histLog.slice(0,300);
+  persist();
+}
+function persist(){localStorage.setItem('xe_h',JSON.stringify(histLog));}
+function filterHist(f,btn){
+  histFilter=f;
+  document.querySelectorAll('.hf-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderHist();
+}
+function renderHist(){
+  const el=document.getElementById('histList');
+  const filtered=histFilter==='all'?histLog:histLog.filter(h=>h.type===histFilter);
+  if(!filtered.length){el.innerHTML='<div class="no-hist">// nothing saved yet</div>';return;}
+  const grp={};
+  filtered.forEach(h=>{if(!grp[h.date])grp[h.date]=[];grp[h.date].push(h);});
+  el.innerHTML=Object.entries(grp).map(([date,items])=>`
+    <div class="hist-group">
+      <div class="hist-date">${date}</div>
+      ${items.map(item=>`
+        <div class="hist-item" onclick="copyRaw(${JSON.stringify(item.text)})">
+          <div><span class="hist-badge${item.type==='article'?' article':item.type==='thread'?' thread':''}">${item.type}</span></div>
+          <div class="hist-slot">${item.time?item.time+' — ':''}${item.slot}</div>
+          <div class="hist-text">${esc(item.text.slice(0,100))}${item.text.length>100?'...':''}</div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+function copyRaw(text){navigator.clipboard.writeText(text).then(()=>showToast('Copied!'));}
+
+// ── CORE API CALL ──
+async function callAPI(system, user, maxTokens=1000){
+  const key=localStorage.getItem('xe_key');
+  if(!key) throw new Error('No API key');
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':key,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:maxTokens,
+      system:system,
+      messages:[{role:'user',content:user}]
+    })
+  });
+  if(!res.ok){
+    const err=await res.json().catch(()=>({}));
+    throw new Error(err?.error?.message||`HTTP ${res.status}`);
+  }
+  const data=await res.json();
+  if(data.error) throw new Error(data.error.message);
+  if(!data.content||!data.content[0]) throw new Error('Empty response');
+  return data.content[0].text.trim();
+}
+
+// ── UTILS ──
+function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+let toastTmr;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTmr);
+  toastTmr=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ── PWA ──
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+
+// ── BOOT ──
+initApp();
+</script>
+</body>
+</html>
