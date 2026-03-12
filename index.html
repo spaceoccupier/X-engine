@@ -189,6 +189,8 @@ input,textarea,select{font-size:16px!important;} /* prevents iOS zoom */
 .fbt:disabled{opacity:.3;}
 .fbt.ok{border-color:var(--green);color:var(--green);}
 .fbt.done{border-color:var(--accent);color:var(--accent);}
+.fbt-x{border-color:#1d9bf0;color:#1d9bf0;font-weight:600;}
+.fbt-x:active{background:rgba(29,155,240,.12);}
 .vscore{font-size:9px;padding:3px 8px;border-radius:4px;font-weight:600;border:1px solid;}
 .vs-hot{color:var(--red);border-color:var(--red);background:rgba(255,68,68,.08);}
 .vs-good{color:var(--orange);border-color:var(--orange);background:rgba(251,146,60,.08);}
@@ -801,6 +803,7 @@ function buildFoot(i){
     <div class="foot-btns">
       <button class="fbt" id="sc-${i}" onclick="scoreOne(${i})">score</button>
       <button class="fbt" id="rd-${i}" onclick="regenOne(${i})">↺</button>
+      <button class="fbt fbt-x" id="ox-${i}" onclick="openInX(${i})">𝕏 post</button>
       <button class="fbt" id="pt-${i}" onclick="markPostedTweet(${i})">posted</button>
       <button class="fbt" id="cp-${i}" onclick="copyTweet(${i})">copy</button>
     </div></div>`;
@@ -831,6 +834,18 @@ function copyTweet(i){
     btn.textContent='✓';btn.classList.add('ok');
     setTimeout(()=>{btn.textContent='copy';btn.classList.remove('ok');},1800);
   });
+}
+function openInX(i){
+  const text=tweetData[i];
+  if(!text||text.startsWith('//')){showToast('Generate a tweet first');return;}
+  // use the current editable content in case user edited it
+  const el=document.getElementById(`tw-${i}`);
+  const live=el?el.innerText:text;
+  const url='https://twitter.com/intent/tweet?text='+encodeURIComponent(live);
+  window.open(url,'_blank');
+  // flash the button
+  const btn=document.getElementById(`ox-${i}`);
+  if(btn){btn.textContent='opening...';setTimeout(()=>{btn.textContent='𝕏 post';},1800);}
 }
 function markPostedTweet(i){
   const btn=document.getElementById(`pt-${i}`);
