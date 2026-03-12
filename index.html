@@ -285,7 +285,7 @@ textarea.af-inp{resize:none;min-height:70px;}
     <div class="ob-sub">Enter your Claude API key.<br>Get it at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com → API Keys</a></div>
     <div class="step-bar"><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div></div>
     <div class="field-wrap">
-      <input type="password" class="field-input" id="apiKeyInp" placeholder="sk-ant-api03-..." autocomplete="off" autocorrect="off" spellcheck="false"/>
+      <input type="password" class="field-input" id="apiKeyInp" placeholder="sk-ant-... or sk-proj-..." autocomplete="off" autocorrect="off" spellcheck="false"/>
       <button class="field-eye" onclick="toggleEye('apiKeyInp',this)">👁</button>
     </div>
     <button class="ob-btn" onclick="submitApiKey()">Continue →</button>
@@ -338,7 +338,7 @@ textarea.af-inp{resize:none;min-height:70px;}
     <div class="ob-title" style="font-size:28px">Reset<br><span>passcode</span></div>
     <div class="ob-sub" style="margin-bottom:22px">Enter your API key to verify it's you. Then you'll set a new passcode.</div>
     <div class="field-wrap">
-      <input type="password" class="field-input" id="resetPassApiInp" placeholder="sk-ant-api03-..." autocomplete="off"/>
+      <input type="password" class="field-input" id="resetPassApiInp" placeholder="sk-ant-... or sk-proj-..." autocomplete="off"/>
       <button class="field-eye" onclick="toggleEye('resetPassApiInp',this)">👁</button>
     </div>
     <button class="ob-btn" onclick="verifyForgotPass()">Verify & Reset</button>
@@ -353,7 +353,7 @@ textarea.af-inp{resize:none;min-height:70px;}
     <div class="ob-title" style="font-size:28px">Change<br><span>API key</span></div>
     <div class="ob-sub" style="margin-bottom:22px">Enter a new API key. Your passcode and saved data will stay the same.</div>
     <div class="field-wrap">
-      <input type="password" class="field-input" id="newApiKeyInp" placeholder="sk-ant-api03-..." autocomplete="off"/>
+      <input type="password" class="field-input" id="newApiKeyInp" placeholder="sk-ant-... or sk-proj-..." autocomplete="off"/>
       <button class="field-eye" onclick="toggleEye('newApiKeyInp',this)">👁</button>
     </div>
     <button class="ob-btn" onclick="submitNewApiKey()">Save New API Key →</button>
@@ -574,8 +574,8 @@ function toggleEye(id,btn){
 }
 function submitApiKey(){
   const val=document.getElementById('apiKeyInp').value.trim();
-  if(!val.startsWith('sk-ant-')){
-    document.getElementById('apiKeyErr').textContent='Key must start with sk-ant-';
+  if(val.length < 20){
+    document.getElementById('apiKeyErr').textContent='Key looks too short — check it';
     return;
   }
   localStorage.setItem('xe_key',val);
@@ -590,7 +590,7 @@ async function testApiKey(){
   const val=document.getElementById('apiKeyInp').value.trim();
   const errEl=document.getElementById('apiKeyErr');
   const btn=document.getElementById('testKeyBtn');
-  if(!val.startsWith('sk-ant-')){ errEl.textContent='Key must start with sk-ant-'; return; }
+  if(val.length < 20){ errEl.textContent='Key looks too short — check it'; return; }
   btn.textContent='Testing...'; btn.disabled=true; errEl.textContent='';
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
@@ -643,8 +643,8 @@ function verifyForgotPass(){
 function showForgotApiKey(){ showScreen('sForgotApiKey'); }
 function submitNewApiKey(){
   const val=document.getElementById('newApiKeyInp').value.trim();
-  if(!val.startsWith('sk-ant-')){
-    document.getElementById('newApiKeyErr').textContent='Key must start with sk-ant-';
+  if(val.length < 20){
+    document.getElementById('newApiKeyErr').textContent='Key looks too short — check it';
     return;
   }
   localStorage.setItem('xe_key',val);
