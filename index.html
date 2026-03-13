@@ -282,10 +282,10 @@ textarea.af-inp{resize:none;min-height:70px;}
   <div class="ob-wrap">
     <div class="ob-eyebrow">X Engine — Setup</div>
     <div class="ob-title">Let's get<br><span>you set up.</span></div>
-    <div class="ob-sub">Enter your Claude API key.<br>Get it at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com → API Keys</a></div>
+    <div class="ob-sub">Enter your Google Gemini API key.<br>Get it free at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com → API Keys</a></div>
     <div class="step-bar"><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div></div>
     <div class="field-wrap">
-      <input type="password" class="field-input" id="apiKeyInp" placeholder="sk-ant-... or sk-proj-..." autocomplete="off" autocorrect="off" spellcheck="false"/>
+      <input type="password" class="field-input" id="apiKeyInp" placeholder="AIzaSy..." autocomplete="off" autocorrect="off" spellcheck="false"/>
       <button class="field-eye" onclick="toggleEye('apiKeyInp',this)">👁</button>
     </div>
     <button class="ob-btn" onclick="submitApiKey()">Continue →</button>
@@ -338,7 +338,7 @@ textarea.af-inp{resize:none;min-height:70px;}
     <div class="ob-title" style="font-size:28px">Reset<br><span>passcode</span></div>
     <div class="ob-sub" style="margin-bottom:22px">Enter your API key to verify it's you. Then you'll set a new passcode.</div>
     <div class="field-wrap">
-      <input type="password" class="field-input" id="resetPassApiInp" placeholder="sk-ant-... or sk-proj-..." autocomplete="off"/>
+      <input type="password" class="field-input" id="resetPassApiInp" placeholder="AIzaSy..." autocomplete="off"/>
       <button class="field-eye" onclick="toggleEye('resetPassApiInp',this)">👁</button>
     </div>
     <button class="ob-btn" onclick="verifyForgotPass()">Verify & Reset</button>
@@ -353,7 +353,7 @@ textarea.af-inp{resize:none;min-height:70px;}
     <div class="ob-title" style="font-size:28px">Change<br><span>API key</span></div>
     <div class="ob-sub" style="margin-bottom:22px">Enter a new API key. Your passcode and saved data will stay the same.</div>
     <div class="field-wrap">
-      <input type="password" class="field-input" id="newApiKeyInp" placeholder="sk-ant-... or sk-proj-..." autocomplete="off"/>
+      <input type="password" class="field-input" id="newApiKeyInp" placeholder="AIzaSy..." autocomplete="off"/>
       <button class="field-eye" onclick="toggleEye('newApiKeyInp',this)">👁</button>
     </div>
     <button class="ob-btn" onclick="submitNewApiKey()">Save New API Key →</button>
@@ -593,22 +593,13 @@ async function testApiKey(){
   if(val.length < 20){ errEl.textContent='Key looks too short — check it'; return; }
   btn.textContent='Testing...'; btn.disabled=true; errEl.textContent='';
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${val}`,{
       method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':val,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body:JSON.stringify({
-        model:'claude-haiku-4-5',
-        max_tokens:10,
-        messages:[{role:'user',content:'say hi'}]
-      })
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:'say hi'}]}]})
     });
     const data=await res.json();
-    if(res.ok && data.content){
+    if(res.ok && data.candidates){
       errEl.style.color='var(--green)';
       errEl.textContent='✓ Key works! Click Continue.';
     } else {
@@ -1160,25 +1151,19 @@ function renderHist(){
 }
 function copyRaw(text){navigator.clipboard.writeText(text).then(()=>showToast('Copied!'));}
 
-// ── CORE API CALL ──
+// ── CORE API CALL (Google Gemini) ──
 async function callAPI(system, user, maxTokens=1000){
   const key=localStorage.getItem('xe_key');
   if(!key){ showToast('No API key — go to lock screen'); throw new Error('No key'); }
+  const prompt=system+'\n\n'+user;
   let res;
   try{
-    res=await fetch('https://api.anthropic.com/v1/messages',{
+    res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,{
       method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':key,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-haiku-4-5',
-        max_tokens:maxTokens,
-        system:system,
-        messages:[{role:'user',content:user}]
+        contents:[{parts:[{text:prompt}]}],
+        generationConfig:{maxOutputTokens:maxTokens,temperature:0.9}
       })
     });
   }catch(netErr){
@@ -1193,8 +1178,8 @@ async function callAPI(system, user, maxTokens=1000){
   }
   const data=await res.json();
   if(data.error){ showToast('API: '+data.error.message.slice(0,55)); throw new Error(data.error.message); }
-  if(!data.content||!data.content[0]) throw new Error('Empty response');
-  return data.content[0].text.trim();
+  if(!data.candidates||!data.candidates[0]) throw new Error('Empty response');
+  return data.candidates[0].content.parts[0].text.trim();
 }
 
 // ── UTILS ──
