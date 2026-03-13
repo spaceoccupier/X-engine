@@ -596,7 +596,7 @@ async function testApiKey(){
     const res=await fetch('https://openrouter.ai/api/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+val,'HTTP-Referer':'https://xengine.netlify.app','X-Title':'X Engine'},
-      body:JSON.stringify({model:'deepseek/deepseek-r1-0528:free',messages:[{role:'user',content:'say hi'}],max_tokens:10})
+      body:JSON.stringify({model:'meta-llama/llama-3.3-70b-instruct:free',messages:[{role:'user',content:'say hi'}],max_tokens:10})
     });
     const data=await res.json();
     if(res.ok && data.choices){
@@ -1166,7 +1166,7 @@ async function callAPI(system, user, maxTokens=1000){
         'X-Title':'X Engine'
       },
       body:JSON.stringify({
-        model:'deepseek/deepseek-r1-0528:free',
+        model:'meta-llama/llama-3.3-70b-instruct:free',
         max_tokens:maxTokens,
         temperature:0.9,
         messages:[
