@@ -10,6 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>X Engine</title>
+<script src="https://js.puter.com/v2/"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=Syne:wght@700;800&display=swap');
 :root{
@@ -277,88 +278,15 @@ textarea.af-inp{resize:none;min-height:70px;}
 </head>
 <body>
 
-<!-- ═══ API KEY ═══ -->
-<div class="screen" id="sApiKey">
-  <div class="ob-wrap">
-    <div class="ob-eyebrow">X Engine — Setup</div>
-    <div class="ob-title">Let's get<br><span>you set up.</span></div>
-    <div class="ob-sub">Enter your OpenRouter API key.<br>Get it free at <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai → Keys</a></div>
-    <div class="step-bar"><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div></div>
-    <div class="field-wrap">
-      <input type="password" class="field-input" id="apiKeyInp" placeholder="sk-or-v1-..." autocomplete="off" autocorrect="off" spellcheck="false"/>
-      <button class="field-eye" onclick="toggleEye('apiKeyInp',this)">👁</button>
-    </div>
-    <button class="ob-btn" onclick="submitApiKey()">Continue →</button>
-    <button class="ob-btn sec" id="testKeyBtn" onclick="testApiKey()">Test Key First</button>
-    <div class="ob-err" id="apiKeyErr"></div>
-    <div class="ob-note">// stored only on this device · never sent anywhere else · only used to call Claude API</div>
-  </div>
-</div>
-
-<!-- ═══ SET PASSCODE ═══ -->
-<div class="screen hidden" id="sSetPass">
-  <div class="pin-wrap">
-    <div class="ob-eyebrow" style="text-align:center;margin-bottom:10px">Step 2 of 3</div>
-    <div class="pin-title">Set your<br>passcode</div>
-    <div class="pin-sub">Choose a 4-digit PIN.</div>
-    <div class="pin-dots" id="setPassDots"><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div></div>
-    <div class="pin-keypad" id="setPassKP"></div>
-  </div>
-</div>
-
-<!-- ═══ CONFIRM PASSCODE ═══ -->
-<div class="screen hidden" id="sConfirmPass">
-  <div class="pin-wrap">
-    <div class="ob-eyebrow" style="text-align:center;margin-bottom:10px">Step 3 of 3</div>
-    <div class="pin-title">Confirm<br>passcode</div>
-    <div class="pin-sub">Enter PIN again.</div>
-    <div class="pin-dots" id="confirmDots"><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div></div>
-    <div class="pin-keypad" id="confirmKP"></div>
-    <div class="ob-err" id="confirmErr" style="text-align:center;margin-top:14px"></div>
-  </div>
-</div>
-
-<!-- ═══ ENTER PASSCODE ═══ -->
-<div class="screen hidden" id="sEnterPass">
-  <div class="pin-wrap">
-    <div class="pin-title">X Engine</div>
-    <div class="pin-sub" id="enterPassSub">Enter your passcode.</div>
-    <div class="pin-dots" id="enterDots"><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div></div>
-    <div class="pin-keypad" id="enterKP"></div>
-    <div class="pin-links">
-      <span class="pin-link" onclick="showForgotPass()">Forgot passcode?</span>
-      <span class="pin-link" onclick="showForgotApiKey()">Forgot API key?</span>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ FORGOT PASSCODE (verify API key) ═══ -->
-<div class="screen hidden" id="sForgotPass">
-  <div class="ob-wrap">
-    <div class="ob-title" style="font-size:28px">Reset<br><span>passcode</span></div>
-    <div class="ob-sub" style="margin-bottom:22px">Enter your API key to verify it's you. Then you'll set a new passcode.</div>
-    <div class="field-wrap">
-      <input type="password" class="field-input" id="resetPassApiInp" placeholder="sk-or-v1-..." autocomplete="off"/>
-      <button class="field-eye" onclick="toggleEye('resetPassApiInp',this)">👁</button>
-    </div>
-    <button class="ob-btn" onclick="verifyForgotPass()">Verify & Reset</button>
-    <button class="ob-btn sec" onclick="showScreen('sEnterPass')">Cancel</button>
-    <div class="ob-err" id="forgotPassErr"></div>
-  </div>
-</div>
-
-<!-- ═══ FORGOT API KEY (clear everything) ═══ -->
-<div class="screen hidden" id="sForgotApiKey">
-  <div class="ob-wrap">
-    <div class="ob-title" style="font-size:28px">Change<br><span>API key</span></div>
-    <div class="ob-sub" style="margin-bottom:22px">Enter a new API key. Your passcode and saved data will stay the same.</div>
-    <div class="field-wrap">
-      <input type="password" class="field-input" id="newApiKeyInp" placeholder="sk-or-v1-..." autocomplete="off"/>
-      <button class="field-eye" onclick="toggleEye('newApiKeyInp',this)">👁</button>
-    </div>
-    <button class="ob-btn" onclick="submitNewApiKey()">Save New API Key →</button>
-    <button class="ob-btn sec" onclick="showScreen('sEnterPass')">Cancel</button>
-    <div class="ob-err" id="newApiKeyErr"></div>
+<!-- ═══ PUTER SIGN IN ═══ -->
+<div class="screen" id="sSignIn">
+  <div class="ob-wrap" style="text-align:center">
+    <div class="ob-eyebrow" style="text-align:center">X Engine</div>
+    <div class="ob-title" style="text-align:center">No API key.<br><span>Just sign in.</span></div>
+    <div class="ob-sub" style="text-align:center">Uses your free Puter account.<br>No credit card. No quota. No setup.</div>
+    <button class="ob-btn" id="signInBtn" onclick="puterSignIn()">Sign in with Puter →</button>
+    <div class="ob-err" id="signInErr"></div>
+    <div class="ob-note" style="text-align:center">// puter.com — free cloud OS · your usage, your account · zero cost to you</div>
   </div>
 </div>
 
@@ -369,7 +297,7 @@ textarea.af-inp{resize:none;min-height:70px;}
       <div class="topbar-title">X<span>Engine</span></div>
       <div class="topbar-r">
         <div class="streak-pill">🔥 <span id="streakTop">0</span></div>
-        <button class="tb-btn" onclick="lockApp()">lock</button>
+        <button class="tb-btn" onclick="puterSignOut()">sign out</button>
       </div>
     </div>
     <div class="tabbar">
@@ -528,7 +456,6 @@ textarea.af-inp{resize:none;min-height:70px;}
 
 <script>
 // ── STATE ──
-let API_KEY = '';
 let tweetData = Array(5).fill('');
 let selThought = -1;
 let thoughts = [];
@@ -537,7 +464,6 @@ let postedDays = [];
 let articleText = '';
 let threadTweets = [];
 let histFilter = 'all';
-let tempPin = '';
 
 try { thoughts = JSON.parse(localStorage.getItem('xe_t')||'[]'); } catch(e){}
 try { histLog = JSON.parse(localStorage.getItem('xe_h')||'[]'); } catch(e){}
@@ -556,188 +482,39 @@ function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
 }
-function initApp(){
-  const key = localStorage.getItem('xe_key');
-  const pass = localStorage.getItem('xe_pin');
-  if(!key){ showScreen('sApiKey'); return; }
-  if(!pass){ API_KEY=key; showScreen('sSetPass'); buildKP('setPassKP',handleSetPass); return; }
-  API_KEY = key;
-  showScreen('sEnterPass');
-  buildKP('enterKP', handleEnterPass);
-}
 
-// ── ONBOARDING: API KEY ──
-function toggleEye(id,btn){
-  const inp=document.getElementById(id);
-  inp.type = inp.type==='password'?'text':'password';
-  btn.textContent = inp.type==='password'?'👁':'🙈';
-}
-function submitApiKey(){
-  const val=document.getElementById('apiKeyInp').value.trim();
-  if(val.length < 20){
-    document.getElementById('apiKeyErr').textContent='Key looks too short — check it';
-    return;
-  }
-  localStorage.setItem('xe_key',val);
-  API_KEY = val;
-  document.getElementById('apiKeyErr').textContent='';
-  showScreen('sSetPass');
-  buildKP('setPassKP',handleSetPass);
-}
-document.getElementById('apiKeyInp').addEventListener('keydown',e=>{if(e.key==='Enter')submitApiKey();});
-
-async function testApiKey(){
-  const val=document.getElementById('apiKeyInp').value.trim();
-  const errEl=document.getElementById('apiKeyErr');
-  const btn=document.getElementById('testKeyBtn');
-  if(val.length < 20){ errEl.textContent='Key looks too short — check it'; return; }
-  btn.textContent='Testing...'; btn.disabled=true; errEl.textContent='';
+// ── PUTER AUTH ──
+async function initApp(){
+  showScreen('sSignIn');
   try{
-    const res=await fetch('https://openrouter.ai/api/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+val,'HTTP-Referer':'https://xengine.netlify.app','X-Title':'X Engine'},
-      body:JSON.stringify({model:'google/gemma-3-27b-it:free',messages:[{role:'user',content:'say hi'}],max_tokens:10})
-    });
-    const data=await res.json();
-    if(res.ok && data.choices){
-      errEl.style.color='var(--green)';
-      errEl.textContent='✓ Key works! Click Continue.';
-    } else {
-      errEl.style.color='var(--red)';
-      errEl.textContent='✗ '+(data?.error?.message||'Invalid key');
-    }
+    const isSignedIn = puter.auth.isSignedIn();
+    if(isSignedIn){ openApp(); }
+  }catch(e){ showScreen('sSignIn'); }
+}
+
+async function puterSignIn(){
+  const btn=document.getElementById('signInBtn');
+  const err=document.getElementById('signInErr');
+  btn.textContent='Signing in...'; btn.disabled=true;
+  try{
+    await puter.auth.signIn();
+    openApp();
   }catch(e){
-    errEl.style.color='var(--red)';
-    errEl.textContent='✗ Network error — check connection';
-  }
-  btn.textContent='Test Key First'; btn.disabled=false;
-}
-
-// ── FORGOT PASSCODE (verify by API key) ──
-function showForgotPass(){ showScreen('sForgotPass'); }
-function verifyForgotPass(){
-  const val=document.getElementById('resetPassApiInp').value.trim();
-  const stored=localStorage.getItem('xe_key');
-  if(val===stored){
-    localStorage.removeItem('xe_pin');
-    tempPin='';
-    document.getElementById('resetPassApiInp').value='';
-    document.getElementById('forgotPassErr').textContent='';
-    showScreen('sSetPass');
-    buildKP('setPassKP',handleSetPass);
-  } else {
-    document.getElementById('forgotPassErr').textContent='API key doesn\'t match.';
+    err.textContent='Sign in failed — try again';
+    btn.textContent='Sign in with Puter →'; btn.disabled=false;
   }
 }
 
-// ── FORGOT API KEY (enter new key) ──
-function showForgotApiKey(){ showScreen('sForgotApiKey'); }
-function submitNewApiKey(){
-  const val=document.getElementById('newApiKeyInp').value.trim();
-  if(val.length < 20){
-    document.getElementById('newApiKeyErr').textContent='Key looks too short — check it';
-    return;
-  }
-  localStorage.setItem('xe_key',val);
-  API_KEY = val;
-  document.getElementById('newApiKeyInp').value='';
-  document.getElementById('newApiKeyErr').textContent='';
-  // if passcode already exists go to passcode screen, else set new one
-  const pass=localStorage.getItem('xe_pin');
-  if(pass){
-    showScreen('sEnterPass');
-    buildKP('enterKP',handleEnterPass);
-    showToast('API key updated!');
-  } else {
-    showScreen('sSetPass');
-    buildKP('setPassKP',handleSetPass);
-  }
+async function puterSignOut(){
+  try{ await puter.auth.signOut(); }catch(e){}
+  showScreen('sSignIn');
+  document.getElementById('signInBtn').textContent='Sign in with Puter →';
+  document.getElementById('signInBtn').disabled=false;
 }
 
-// ── PIN ──
-function buildKP(id, handler){
-  const c=document.getElementById(id); c.innerHTML='';
-  ['1','2','3','4','5','6','7','8','9','','0','⌫'].forEach(k=>{
-    const btn=document.createElement('button');
-    btn.className='pin-key'+(k===''?' ghost':k==='⌫'?' del':'');
-    btn.textContent=k;
-    if(k!=='') btn.addEventListener('click',()=>{
-      btn.classList.add('pressed');
-      setTimeout(()=>btn.classList.remove('pressed'),100);
-      handler(k);
-    });
-    c.appendChild(btn);
-  });
-}
-let setBuf='';
-function handleSetPass(k){
-  if(k==='⌫'){setBuf=setBuf.slice(0,-1);}
-  else if(setBuf.length<4){setBuf+=k;}
-  updateDots('setPassDots',setBuf.length);
-  if(setBuf.length===4){
-    tempPin=setBuf; setBuf='';
-    setTimeout(()=>{ showScreen('sConfirmPass'); buildKP('confirmKP',handleConfirmPass); },180);
-  }
-}
-let confBuf='';
-function handleConfirmPass(k){
-  if(k==='⌫'){confBuf=confBuf.slice(0,-1);}
-  else if(confBuf.length<4){confBuf+=k;}
-  updateDots('confirmDots',confBuf.length);
-  if(confBuf.length===4){
-    if(confBuf===tempPin){
-      localStorage.setItem('xe_pin',tempPin);
-      confBuf='';
-      setTimeout(()=>openApp(),180);
-    } else {
-      confBuf='';
-      document.getElementById('confirmErr').textContent='PINs don\'t match. Try again.';
-      shakeDots('confirmDots'); updateDots('confirmDots',0,true);
-      setTimeout(()=>{ document.getElementById('confirmErr').textContent=''; updateDots('confirmDots',0); },900);
-    }
-  }
-}
-let entBuf=''; let wrongTries=0;
-function handleEnterPass(k){
-  if(k==='⌫'){entBuf=entBuf.slice(0,-1);}
-  else if(entBuf.length<4){entBuf+=k;}
-  updateDots('enterDots',entBuf.length);
-  if(entBuf.length===4){
-    const stored=localStorage.getItem('xe_pin');
-    if(entBuf===stored){
-      entBuf=''; wrongTries=0;
-      setTimeout(()=>openApp(),180);
-    } else {
-      entBuf=''; wrongTries++;
-      shakeDots('enterDots'); updateDots('enterDots',0,true);
-      const sub=document.getElementById('enterPassSub');
-      sub.textContent=wrongTries>=3?`Wrong PIN (${wrongTries}x). Forgot it?`:'Wrong passcode. Try again.';
-      setTimeout(()=>updateDots('enterDots',0),650);
-    }
-  }
-}
-function updateDots(id,count,err=false){
-  document.querySelectorAll(`#${id} .pin-dot`).forEach((d,i)=>{
-    d.classList.toggle('filled',i<count&&!err);
-    d.classList.toggle('error',i<count&&err);
-  });
-}
-function shakeDots(id){
-  const el=document.getElementById(id);
-  el.classList.add('shake');
-  setTimeout(()=>el.classList.remove('shake'),450);
-}
-
-// ── OPEN APP ──
 function openApp(){
   showScreen('sApp');
   renderThoughts(); renderSlots(); renderStreak(); renderHist(); updateStreakTop();
-}
-function lockApp(){
-  entBuf=''; updateDots('enterDots',0);
-  document.getElementById('enterPassSub').textContent='Enter your passcode.';
-  showScreen('sEnterPass');
-  buildKP('enterKP',handleEnterPass);
 }
 
 // ── TABS ──
@@ -1151,44 +928,26 @@ function renderHist(){
 }
 function copyRaw(text){navigator.clipboard.writeText(text).then(()=>showToast('Copied!'));}
 
-// ── CORE API CALL (OpenRouter) ──
+// ── CORE API CALL (Puter.js — no API key needed) ──
 async function callAPI(system, user, maxTokens=1000){
-  const key=localStorage.getItem('xe_key');
-  if(!key){ showToast('No API key — go to lock screen'); throw new Error('No key'); }
-  let res;
   try{
-    res=await fetch('https://openrouter.ai/api/v1/chat/completions',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'Authorization':'Bearer '+key,
-        'HTTP-Referer':'https://xengine.netlify.app',
-        'X-Title':'X Engine'
-      },
-      body:JSON.stringify({
-        model:'google/gemma-3-27b-it:free',
-        max_tokens:maxTokens,
-        temperature:0.9,
-        messages:[
-          {role:'system',content:system},
-          {role:'user',content:user}
-        ]
-      })
-    });
-  }catch(netErr){
-    showToast('Network error — check connection');
-    throw netErr;
-  }
-  if(!res.ok){
-    let msg='HTTP '+res.status;
-    try{ const e=await res.json(); msg=e?.error?.message||msg; }catch(e){}
+    const response = await puter.ai.chat(
+      [
+        {role:'system', content:system},
+        {role:'user', content:user}
+      ],
+      {model:'claude-sonnet-4-5', max_tokens:maxTokens}
+    );
+    // puter returns either string or object with message.content
+    if(typeof response === 'string') return response.trim();
+    if(response?.message?.content) return response.message.content.trim();
+    if(response?.content) return response.content.trim();
+    throw new Error('Unexpected response format');
+  }catch(e){
+    const msg = e?.message||'Unknown error';
     showToast('Error: '+msg.slice(0,55));
-    throw new Error(msg);
+    throw e;
   }
-  const data=await res.json();
-  if(data.error){ showToast('API: '+data.error.message.slice(0,55)); throw new Error(data.error.message); }
-  if(!data.choices||!data.choices[0]) throw new Error('Empty response');
-  return data.choices[0].message.content.trim();
 }
 
 // ── UTILS ──
@@ -1207,7 +966,7 @@ if('serviceWorker' in navigator){
 }
 
 // ── BOOT ──
-initApp();
+window.addEventListener("load", ()=>{ setTimeout(initApp, 300); });
 </script>
 </body>
 </html>
