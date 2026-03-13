@@ -455,6 +455,17 @@ textarea.af-inp{resize:none;min-height:70px;}
 <div class="toast" id="toast"></div>
 
 <script>
+// ── GROWTH PRESET ──
+const GROWTH_PRESET = `GROWTH MISSION: @adityanayak_ is at 0-100 followers and needs to grow to 500+ fast to unlock X monetization.
+GROWTH RULES FOR EVERY PIECE OF CONTENT:
+- Hook in the FIRST line — if line 1 doesn't stop a scroll, the post fails. Make it a bold claim, uncomfortable truth, or a question that creates tension.
+- Write for SHAREABILITY — would a stranger repost this without knowing you? If not, rewrite it.
+- Aim for REPLIES — end with something that makes people want to agree, disagree, or add their take. Silence is not always the goal when growing.
+- Target the RIGHT audience — tech builders, AI enthusiasts, startup folks, students grinding. Write for them specifically.
+- Every post should do ONE of: teach something, challenge an assumption, make someone feel understood, or say something people think but never say out loud.
+- Be SPECIFIC not vague — "AI is changing everything" is dead. "AI just made my 3-month project a weekend project" is alive.
+- CONSISTENCY OF VOICE — always sounds like the same human. Raw. Direct. Slightly contrarian. Never corporate.`;
+
 // ── STATE ──
 let tweetData = Array(5).fill('');
 let selThought = -1;
@@ -722,8 +733,10 @@ async function callTweet(idx,topics,tone){
   const sys=`You are a ghostwriter for @adityanayak_ on X (Twitter).
 Voice: raw, philosophical, short punchy takes. No emojis. No hashtags. Real human thinking out loud.
 Background: IT student India, building startups, AI/sci-fi/tech, national-level skater, IEEE chapter leader, created "Lag: The Human Disconnect" (Netropolis sci-fi concept).
-STRICT RULES: 1-4 lines max · no emojis · no hashtags · lowercase is fine · NEVER start with "I" · NEVER use: just, literally, actually, honestly, reminder · end with silence not a CTA · never sound like LinkedIn.
-Tone: ${tone}`;
+STRICT RULES: 1-4 lines max · no emojis · no hashtags · lowercase is fine · NEVER start with "I" · NEVER use: just, literally, actually, honestly, reminder · never sound like LinkedIn.
+Tone: ${tone}
+
+${GROWTH_PRESET}`;
   const usr=`Write ONE tweet for the ${slot.time} slot (${slot.tag}).
 ${hasT?`Raw thought to expand: "${raw}"`:`Topics (pick one angle): ${topics.join(', ')}`}
 Return ONLY the tweet text. No quotes. No explanation. No preamble.`;
@@ -744,8 +757,10 @@ async function generateThread(){
   const sys=`You are a ghostwriter for @adityanayak_ writing an X thread.
 Voice: raw, philosophical, punchy. No emojis. No hashtags. Real human.
 Background: IT student India, startups, AI/sci-fi, created "Lag: The Human Disconnect".
-Thread rules: each tweet 1-3 lines · no emojis/hashtags · first tweet is the hook · last tweet ends with quiet punch, not CTA · tweets must flow together.
-Tone: ${tone}`;
+Thread rules: each tweet 1-3 lines · no emojis/hashtags · first tweet is the SCROLL-STOPPING hook · last tweet creates debate or ends with a thought that lingers · every tweet must make the next one irresistible to read.
+Tone: ${tone}
+
+${GROWTH_PRESET}`;
   const usr=`Write a ${count}-tweet thread about: "${topic}"
 ${angle?`My angle: "${angle}"`:''}
 Format as JSON array ONLY: ["tweet1","tweet2",...]
@@ -803,7 +818,9 @@ async function generateArticle(){
   const sys=`You are a ghostwriter for @adityanayak_ writing an X Article.
 Voice: raw, philosophical, punchy. No fluff. No emojis. No hashtags. Real human.
 Background: IT student India, startups, AI/sci-fi, created "Lag: The Human Disconnect".
-Rules: style=${style} · tone=${tone} · ${lenMap[length]} · short paragraphs · no headers unless essential · no bullets · strong opening line · ending that lingers, no CTA.`;
+Rules: style=${style} · tone=${tone} · ${lenMap[length]} · short paragraphs · no headers unless essential · no bullets · opening line must be impossible to scroll past · ending that makes people screenshot and share.
+
+${GROWTH_PRESET}`;
   const usr=`Write an X Article: "${topic}"\n${angle?`Angle: "${angle}"`:''}
 
 Return only the article text. No titles, no preamble.`;
