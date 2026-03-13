@@ -282,10 +282,10 @@ textarea.af-inp{resize:none;min-height:70px;}
   <div class="ob-wrap">
     <div class="ob-eyebrow">X Engine — Setup</div>
     <div class="ob-title">Let's get<br><span>you set up.</span></div>
-    <div class="ob-sub">Enter your Google Gemini API key.<br>Get it free at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com → API Keys</a></div>
+    <div class="ob-sub">Enter your OpenRouter API key.<br>Get it free at <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai → Keys</a></div>
     <div class="step-bar"><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div></div>
     <div class="field-wrap">
-      <input type="password" class="field-input" id="apiKeyInp" placeholder="AIzaSy..." autocomplete="off" autocorrect="off" spellcheck="false"/>
+      <input type="password" class="field-input" id="apiKeyInp" placeholder="sk-or-v1-..." autocomplete="off" autocorrect="off" spellcheck="false"/>
       <button class="field-eye" onclick="toggleEye('apiKeyInp',this)">👁</button>
     </div>
     <button class="ob-btn" onclick="submitApiKey()">Continue →</button>
@@ -338,7 +338,7 @@ textarea.af-inp{resize:none;min-height:70px;}
     <div class="ob-title" style="font-size:28px">Reset<br><span>passcode</span></div>
     <div class="ob-sub" style="margin-bottom:22px">Enter your API key to verify it's you. Then you'll set a new passcode.</div>
     <div class="field-wrap">
-      <input type="password" class="field-input" id="resetPassApiInp" placeholder="AIzaSy..." autocomplete="off"/>
+      <input type="password" class="field-input" id="resetPassApiInp" placeholder="sk-or-v1-..." autocomplete="off"/>
       <button class="field-eye" onclick="toggleEye('resetPassApiInp',this)">👁</button>
     </div>
     <button class="ob-btn" onclick="verifyForgotPass()">Verify & Reset</button>
@@ -353,7 +353,7 @@ textarea.af-inp{resize:none;min-height:70px;}
     <div class="ob-title" style="font-size:28px">Change<br><span>API key</span></div>
     <div class="ob-sub" style="margin-bottom:22px">Enter a new API key. Your passcode and saved data will stay the same.</div>
     <div class="field-wrap">
-      <input type="password" class="field-input" id="newApiKeyInp" placeholder="AIzaSy..." autocomplete="off"/>
+      <input type="password" class="field-input" id="newApiKeyInp" placeholder="sk-or-v1-..." autocomplete="off"/>
       <button class="field-eye" onclick="toggleEye('newApiKeyInp',this)">👁</button>
     </div>
     <button class="ob-btn" onclick="submitNewApiKey()">Save New API Key →</button>
@@ -593,13 +593,13 @@ async function testApiKey(){
   if(val.length < 20){ errEl.textContent='Key looks too short — check it'; return; }
   btn.textContent='Testing...'; btn.disabled=true; errEl.textContent='';
   try{
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${val}`,{
+    const res=await fetch('https://openrouter.ai/api/v1/chat/completions',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:'say hi'}]}]})
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+val,'HTTP-Referer':'https://xengine.netlify.app','X-Title':'X Engine'},
+      body:JSON.stringify({model:'meta-llama/llama-3.1-8b-instruct:free',messages:[{role:'user',content:'say hi'}],max_tokens:10})
     });
     const data=await res.json();
-    if(res.ok && data.candidates){
+    if(res.ok && data.choices){
       errEl.style.color='var(--green)';
       errEl.textContent='✓ Key works! Click Continue.';
     } else {
@@ -1151,19 +1151,28 @@ function renderHist(){
 }
 function copyRaw(text){navigator.clipboard.writeText(text).then(()=>showToast('Copied!'));}
 
-// ── CORE API CALL (Google Gemini) ──
+// ── CORE API CALL (OpenRouter) ──
 async function callAPI(system, user, maxTokens=1000){
   const key=localStorage.getItem('xe_key');
   if(!key){ showToast('No API key — go to lock screen'); throw new Error('No key'); }
-  const prompt=system+'\n\n'+user;
   let res;
   try{
-    res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,{
+    res=await fetch('https://openrouter.ai/api/v1/chat/completions',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+key,
+        'HTTP-Referer':'https://xengine.netlify.app',
+        'X-Title':'X Engine'
+      },
       body:JSON.stringify({
-        contents:[{parts:[{text:prompt}]}],
-        generationConfig:{maxOutputTokens:maxTokens,temperature:0.9}
+        model:'meta-llama/llama-3.1-8b-instruct:free',
+        max_tokens:maxTokens,
+        temperature:0.9,
+        messages:[
+          {role:'system',content:system},
+          {role:'user',content:user}
+        ]
       })
     });
   }catch(netErr){
@@ -1178,8 +1187,8 @@ async function callAPI(system, user, maxTokens=1000){
   }
   const data=await res.json();
   if(data.error){ showToast('API: '+data.error.message.slice(0,55)); throw new Error(data.error.message); }
-  if(!data.candidates||!data.candidates[0]) throw new Error('Empty response');
-  return data.candidates[0].content.parts[0].text.trim();
+  if(!data.choices||!data.choices[0]) throw new Error('Empty response');
+  return data.choices[0].message.content.trim();
 }
 
 // ── UTILS ──
