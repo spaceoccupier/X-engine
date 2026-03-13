@@ -932,20 +932,20 @@ function copyRaw(text){navigator.clipboard.writeText(text).then(()=>showToast('C
 async function callAPI(system, user, maxTokens=1000){
   try{
     const response = await puter.ai.chat(
-      [
-        {role:'system', content:system},
-        {role:'user', content:user}
-      ],
-      {model:'claude-sonnet-4-5', max_tokens:maxTokens}
+      [{role:'system',content:system},{role:'user',content:user}],
+      {model:'gpt-4o-mini'}
     );
-    // puter returns either string or object with message.content
+    // GPT models via Puter return response.message.content as a plain string
+    const content = response?.message?.content;
+    if(typeof content === 'string') return content.trim();
+    // Claude models return content as array [{type:'text',text:'...'}]
+    if(Array.isArray(content)) return content[0]?.text?.trim() || '';
+    // Fallback: if response itself is a string
     if(typeof response === 'string') return response.trim();
-    if(response?.message?.content) return response.message.content.trim();
-    if(response?.content) return response.content.trim();
-    throw new Error('Unexpected response format');
+    throw new Error('Unexpected response format: '+JSON.stringify(response).slice(0,80));
   }catch(e){
     const msg = e?.message||'Unknown error';
-    showToast('Error: '+msg.slice(0,55));
+    showToast('Error: '+msg.slice(0,60));
     throw e;
   }
 }
