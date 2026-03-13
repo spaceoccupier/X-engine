@@ -497,6 +497,16 @@ function showScreen(id){
 // ── PUTER AUTH ──
 async function initApp(){
   showScreen('sSignIn');
+  // Wait for puter.js to fully load
+  let attempts = 0;
+  while(typeof puter === 'undefined' && attempts < 20){
+    await new Promise(r=>setTimeout(r,200));
+    attempts++;
+  }
+  if(typeof puter === 'undefined'){
+    document.getElementById('signInErr').textContent='Puter failed to load — check internet connection';
+    return;
+  }
   try{
     const isSignedIn = puter.auth.isSignedIn();
     if(isSignedIn){ openApp(); }
@@ -507,11 +517,20 @@ async function puterSignIn(){
   const btn=document.getElementById('signInBtn');
   const err=document.getElementById('signInErr');
   btn.textContent='Signing in...'; btn.disabled=true;
+  err.textContent='';
+  err.style.color='var(--red)';
   try{
     await puter.auth.signIn();
     openApp();
   }catch(e){
-    err.textContent='Sign in failed — try again';
+    const msg = e?.message || e?.toString() || 'Unknown error';
+    // If popup was closed by user, just reset silently
+    if(msg.toLowerCase().includes('close') || msg.toLowerCase().includes('cancel')){
+      err.style.color='var(--muted2)';
+      err.textContent='Popup closed — tap to try again';
+    } else {
+      err.textContent='Error: '+msg.slice(0,80);
+    }
     btn.textContent='Sign in with Puter →'; btn.disabled=false;
   }
 }
@@ -730,16 +749,31 @@ async function callTweet(idx,topics,tone){
   const slot=SLOTS[idx];
   const hasT=selThought>=0;
   const raw=hasT?thoughts[selThought]:'';
-  const sys=`You are a ghostwriter for @adityanayak_ on X (Twitter).
-Voice: raw, philosophical, short punchy takes. No emojis. No hashtags. Real human thinking out loud.
-Background: IT student India, building startups, AI/sci-fi/tech, national-level skater, IEEE chapter leader, created "Lag: The Human Disconnect" (Netropolis sci-fi concept).
-STRICT RULES: 1-4 lines max · no emojis · no hashtags · lowercase is fine · NEVER start with "I" · NEVER use: just, literally, actually, honestly, reminder · never sound like LinkedIn.
-Tone: ${tone}
+  const sys=`You are writing as Aditya Nayak (@adityanayak_) — a 20-something IT student from India building startups, thinks about AI/tech obsessively, skated at national level, runs his IEEE chapter, created a sci-fi world called Netropolis where your internet ping controls how fast you can physically move.
 
-${GROWTH_PRESET}`;
-  const usr=`Write ONE tweet for the ${slot.time} slot (${slot.tag}).
-${hasT?`Raw thought to expand: "${raw}"`:`Topics (pick one angle): ${topics.join(', ')}`}
-Return ONLY the tweet text. No quotes. No explanation. No preamble.`;
+His voice sounds like this:
+- "the internet gave everyone a voice. turns out most people had nothing to say."
+- "everyone's optimizing for success. nobody's optimizing for meaning."
+- "we built AI to think for us. now we're scared it might."
+
+What makes his voice HIS:
+He says the thing people are thinking but won't say out loud. No build-up, no lesson, no conclusion that ties it together neatly. Just the observation, dropped and left. Like he thought of it mid-conversation and typed it before he could second-guess himself.
+
+HARD RULES — break these and the tweet is wrong:
+- no emojis. ever.
+- no hashtags. ever.
+- never start with "I"
+- never end with a question asking people to engage ("what do you think?" "drop your thoughts" etc)
+- never use: just, literally, actually, honestly, reminder, excited, thrilled, grateful, journey, leverage, hustle, grind, game-changer, paradigm
+- never sound like you're teaching someone a lesson
+- never sound like a motivational poster
+- never sound like LinkedIn
+- lowercase preferred. feels more like a thought than a statement.
+- 1-4 lines max. if it needs more it's an article not a tweet.
+- if the tone is ${tone}, lean into that — but don't perform it. feel it.`;
+  const usr=`${slot.tag} — ${slot.time} slot.
+${hasT?`He's been sitting on this thought: "${raw}". Write it as a tweet the way he'd actually type it — no polish, just the rawest version of that idea.`:`Topic area: ${topics.join(', ')}. Pick one specific angle that feels uncomfortable or counterintuitive. Not the obvious take.`}
+Output: just the tweet. nothing else. no quotes around it. no explanation.`;
   return callAPI(sys,usr,300);
 }
 
@@ -754,13 +788,22 @@ async function generateThread(){
   const angle=document.getElementById('threadAngle').value.trim();
   const out=document.getElementById('threadOut');
   out.innerHTML=`<div style="display:flex;align-items:center;gap:8px;padding:20px 0;font-size:11px;color:var(--muted2)"><span class="ld"></span><span class="ld"></span><span class="ld"></span><span style="margin-left:6px">building thread...</span></div>`;
-  const sys=`You are a ghostwriter for @adityanayak_ writing an X thread.
-Voice: raw, philosophical, punchy. No emojis. No hashtags. Real human.
-Background: IT student India, startups, AI/sci-fi, created "Lag: The Human Disconnect".
-Thread rules: each tweet 1-3 lines · no emojis/hashtags · first tweet is the SCROLL-STOPPING hook · last tweet creates debate or ends with a thought that lingers · every tweet must make the next one irresistible to read.
-Tone: ${tone}
+  const sys=`You are writing a thread as Aditya Nayak (@adityanayak_) — IT student India, building startups, obsessed with AI/tech, national-level skater, IEEE leader, created Netropolis sci-fi (where internet ping controls physical movement).
 
-${GROWTH_PRESET}`;
+His voice: blunt, a little cynical, observational. Says the quiet part out loud. No fluff, no life lessons, no wrapping things up neatly.
+
+Examples of his style:
+- "the internet gave everyone a voice. turns out most people had nothing to say."
+- "we built AI to think for us. now we're scared it might."
+- "everyone's optimizing for success. nobody's optimizing for meaning."
+
+Thread rules:
+- tweet 1: one punchy line that makes people stop scrolling. no context. no "here's a thread about X". just the sharpest version of the idea.
+- middle tweets: build the thought one layer at a time. each tweet works standalone. no filler.
+- last tweet: does NOT summarize. does NOT say "so remember to...". ends on something that sits in your head after you close the app.
+- no emojis. no hashtags. no numbering like "1/" — that's handled separately.
+- lowercase preferred. 1-3 lines per tweet.
+- tone: ${tone} — but earned, not performed.`;
   const usr=`Write a ${count}-tweet thread about: "${topic}"
 ${angle?`My angle: "${angle}"`:''}
 Format as JSON array ONLY: ["tweet1","tweet2",...]
@@ -815,12 +858,23 @@ async function generateArticle(){
   const tone=document.getElementById('articleTone').value;
   const style=getStyle();
   const lenMap={short:'350-450 words',medium:'650-800 words',long:'1100-1300 words'};
-  const sys=`You are a ghostwriter for @adityanayak_ writing an X Article.
-Voice: raw, philosophical, punchy. No fluff. No emojis. No hashtags. Real human.
-Background: IT student India, startups, AI/sci-fi, created "Lag: The Human Disconnect".
-Rules: style=${style} · tone=${tone} · ${lenMap[length]} · short paragraphs · no headers unless essential · no bullets · opening line must be impossible to scroll past · ending that makes people screenshot and share.
+  const sys=`You are writing an X Article as Aditya Nayak (@adityanayak_) — IT student India, building startups, thinks about AI/tech obsessively, national-level skater, IEEE chapter leader, created Netropolis (sci-fi world where internet ping controls physical movement as a metaphor for digital inequality).
 
-${GROWTH_PRESET}`;
+His writing voice — think of it like this: he's not writing to teach you something. he's writing because he can't stop thinking about it and putting it down is the only way to quiet it. that's the energy every article needs.
+
+Style: ${style}. Tone: ${tone}. Length: ${lenMap[length]}.
+
+What this means in practice:
+- first sentence: no warm-up. no "in today's world". no "I've been thinking about". start mid-thought, like you're already deep in it.
+- paragraphs: 1-3 sentences. breathe between them. don't stack ideas — space them out.
+- no bullet points. no headers unless the piece genuinely breaks into sections.
+- no emojis. no hashtags.
+- never moralize. never tell the reader what to do or think.
+- don't summarize at the end. end on the most uncomfortable or interesting version of the idea — the one that makes someone stare at their screen for a second before scrolling.
+- lowercase for casual asides feels right. full sentences for the sharp observations.
+- the piece should feel like it was written at 1am because he couldn't sleep, not like it was planned and outlined.
+
+FORBIDDEN words/phrases: just, literally, actually, honestly, in conclusion, to summarize, at the end of the day, game-changer, paradigm shift, excited to share, journey, hustle, grind, leverage, it's important to, we need to talk about, unpacking, deep dive.`;
   const usr=`Write an X Article: "${topic}"\n${angle?`Angle: "${angle}"`:''}
 
 Return only the article text. No titles, no preamble.`;
@@ -981,6 +1035,12 @@ if('serviceWorker' in navigator){
 }
 
 // ── BOOT ──
+// Unregister old service workers to prevent stale cache issues on GitHub Pages
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(regs=>{
+    regs.forEach(reg=>reg.unregister());
+  });
+}
 window.addEventListener("load", ()=>{ setTimeout(initApp, 300); });
 </script>
 </body>
