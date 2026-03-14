@@ -809,7 +809,7 @@ ${angle?`My angle: "${angle}"`:''}
 Format as JSON array ONLY: ["tweet1","tweet2",...]
 Return ONLY valid JSON. Nothing else.`;
   try{
-    const raw=await callAPI(sys,usr,2000);
+    const raw=await callAPI(sys,usr,2000,'anthropic/claude-haiku-4-5');
     const clean=raw.replace(/```json/g,'').replace(/```/g,'').trim();
     threadTweets=JSON.parse(clean);
     renderThreadOut();
@@ -879,7 +879,7 @@ FORBIDDEN words/phrases: just, literally, actually, honestly, in conclusion, to 
 
 Return only the article text. No titles, no preamble.`;
   try{
-    articleText=await callAPI(sys,usr,2000);
+    articleText=await callAPI(sys,usr,2000,'anthropic/claude-sonnet-4-6');
     content.innerHTML=esc(articleText);
     content.contentEditable='true';
     content.oninput=()=>{articleText=content.innerText;updWC();};
@@ -1000,12 +1000,12 @@ function renderHist(){
 function copyRaw(text){navigator.clipboard.writeText(text).then(()=>showToast('Copied!'));}
 
 // ── CORE API CALL (Puter.js — Claude) ──
-async function callAPI(system, user, maxTokens=1000){
+async function callAPI(system, user, maxTokens=1000, model='anthropic/claude-haiku-4-5'){
   try{
     // puter.ai.chat(prompt_or_messages, testMode, options)
     // passing combined prompt as single string is most reliable
     const fullPrompt = system + '\n\n' + user;
-    const response = await puter.ai.chat(fullPrompt, {model:'claude-3-7-sonnet'});
+    const response = await puter.ai.chat(fullPrompt, {model});
 
     // Puter returns different shapes depending on model — handle all
     if(typeof response === 'string') return response.trim();
