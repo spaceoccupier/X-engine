@@ -334,6 +334,14 @@ textarea.af-inp{resize:none;min-height:70px;}
           <button class="chip on" data-t="Sci-fi & Creative">Sci-fi</button>
           <button class="chip on" data-t="Student life & hustle">Student</button>
           <button class="chip on" data-t="Random thought">Random</button>
+          <button class="chip" data-t="Money & Wealth mindset">Money</button>
+          <button class="chip" data-t="Human psychology & behavior">Psychology</button>
+          <button class="chip" data-t="Learning & Knowledge">Learning</button>
+          <button class="chip" data-t="India & building in emerging markets">India</button>
+          <button class="chip" data-t="Productivity & deep work">Productivity</button>
+          <button class="chip" data-t="Society & modern life observations">Society</button>
+          <button class="chip" data-t="Creativity & making things">Creativity</button>
+          <button class="chip" data-t="Future of work & automation">Future Work</button>
         </div>
         <div class="slabel">// tone</div>
         <div class="tone-row">
@@ -342,6 +350,11 @@ textarea.af-inp{resize:none;min-height:70px;}
           <button class="tone-chip" data-tone="raw & honest">raw</button>
           <button class="tone-chip" data-tone="quiet observation">quiet</button>
           <button class="tone-chip" data-tone="contrarian take">contrarian</button>
+          <button class="tone-chip" data-tone="deadpan / dry wit">deadpan</button>
+          <button class="tone-chip" data-tone="uncomfortable truth">uncomfortable</button>
+          <button class="tone-chip" data-tone="curious & questioning">curious</button>
+          <button class="tone-chip" data-tone="cynical realist">cynical</button>
+          <button class="tone-chip" data-tone="zen & stoic">zen</button>
         </div>
         <div class="slabel">// length</div>
         <div class="wc-row">
@@ -802,8 +815,16 @@ HARD RULES — break these and the tweet is wrong:
 - 1-4 lines max. if it needs more it's an article not a tweet.
 - if the tone is ${tone}, lean into that — but don't perform it. feel it.`;
   const wcLine = wc && wc !== 'any' ? `Length: strictly ${wc} words. Count carefully.` : `Length: natural — whatever length feels right for the thought.`;
-  const usr=`${slot.tag} — ${slot.time} slot.
-${hasT?`He's been sitting on this thought: "${raw}". Write it as a tweet the way he'd actually type it — no polish, just the rawest version of that idea.`:`Topic area: ${topics.join(', ')}. Pick one specific angle that feels uncomfortable or counterintuitive. Not the obvious take.`}
+  const slotAngles = [
+    'pick an angle most people would find uncomfortable or counterintuitive',
+    'pick a completely different angle from anything already said — fresh framing, different entry point',
+    'zoom out — make it about a bigger pattern, not just this topic',
+    'zoom in — make it personal and specific, not abstract',
+    'flip the assumption — what if the opposite is true?'
+  ];
+  const angleInstruction = slotAngles[idx] || slotAngles[0];
+  const usr=`${slot.tag} — ${slot.time} slot (tweet ${idx+1} of 5).
+${hasT?`He's been sitting on this thought: "${raw}". Write it as a tweet the way he'd actually type it — no polish, just the rawest version of that idea. ${angleInstruction}.`:`Topic area: ${topics.join(', ')}. ${angleInstruction}. This must be completely different from any other tweet in this batch — different structure, different idea, different entry point.`}
 ${wcLine}
 Output: just the tweet. nothing else. no quotes around it. no explanation.`;
   return callAPI(sys,usr,300);
