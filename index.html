@@ -1002,18 +1002,27 @@ function copyRaw(text){navigator.clipboard.writeText(text).then(()=>showToast('C
 // ── CORE API CALL (Puter.js — Claude) ──
 async function callAPI(system, user, maxTokens=1000){
   try{
-    const response = await puter.ai.chat(
-      [{role:'user', content: system + '\n\n' + user}],
-      {model:'claude-3-5-haiku'}
-    );
-    // Claude via Puter: response.message.content is an array [{type:'text', text:'...'}]
-    const content = response?.message?.content;
-    if(Array.isArray(content)) return content[0]?.text?.trim() || '';
-    if(typeof content === 'string') return content.trim();
+    // puter.ai.chat(prompt_or_messages, testMode, options)
+    // passing combined prompt as single string is most reliable
+    const fullPrompt = system + '\n\n' + user;
+    const response = await puter.ai.chat(fullPrompt, {model:'claude-3-7-sonnet'});
+
+    // Puter returns different shapes depending on model — handle all
     if(typeof response === 'string') return response.trim();
-    throw new Error('Empty response from Claude');
+    if(response?.message?.content){
+      const c = response.message.content;
+      if(Array.isArray(c)) return c.map(x=>x.text||'').join('').trim();
+      if(typeof c === 'string') return c.trim();
+    }
+    if(response?.text) return response.text.trim();
+    if(response?.content) return response.content.trim();
+    // last resort — stringify and extract
+    const str = JSON.stringify(response);
+    console.error('Unexpected puter response shape:', str);
+    throw new Error('Unexpected response shape');
   }catch(e){
-    const msg = e?.message || 'Unknown error';
+    const msg = e?.message || e?.toString() || 'Unknown error';
+    console.error('callAPI error:', e);
     showToast('Error: '+msg.slice(0,60));
     throw e;
   }
