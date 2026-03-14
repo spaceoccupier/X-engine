@@ -154,6 +154,9 @@ input,textarea,select{font-size:16px!important;} /* prevents iOS zoom */
 .chip{background:var(--s1);border:1px solid var(--border);color:var(--muted2);font-family:var(--mono);font-size:9px;padding:7px 13px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;border-radius:4px;user-select:none;transition:all .1s;}
 .chip.on{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600;}
 .tone-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.wc-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.wc-chip{background:var(--s1);border:1px solid var(--border);color:var(--muted2);font-family:var(--mono);font-size:9px;padding:7px 13px;cursor:pointer;letter-spacing:1px;border-radius:4px;user-select:none;transition:all .1s;}
+.wc-chip.on{background:#0a1a0a;border-color:#4ade80;color:#4ade80;font-weight:600;}
 .tone-chip{background:var(--s1);border:1px solid var(--border);color:var(--muted2);font-family:var(--mono);font-size:9px;padding:7px 13px;cursor:pointer;letter-spacing:1px;border-radius:4px;user-select:none;transition:all .1s;}
 .tone-chip.on{background:var(--s2);border-color:var(--border2);color:var(--white);}
 
@@ -339,6 +342,14 @@ textarea.af-inp{resize:none;min-height:70px;}
           <button class="tone-chip" data-tone="raw & honest">raw</button>
           <button class="tone-chip" data-tone="quiet observation">quiet</button>
           <button class="tone-chip" data-tone="contrarian take">contrarian</button>
+        </div>
+        <div class="slabel">// length</div>
+        <div class="wc-row">
+          <button class="wc-chip" data-wc="5-10">5–10 words</button>
+          <button class="wc-chip on" data-wc="10-15">10–15 words</button>
+          <button class="wc-chip" data-wc="15-25">15–25 words</button>
+          <button class="wc-chip" data-wc="25-35">25–35 words</button>
+          <button class="wc-chip" data-wc="any">no limit</button>
         </div>
         <div class="gen-row">
           <button class="gen-btn" id="genBtn" onclick="generateAll()">Generate 5 Posts</button>
@@ -605,6 +616,12 @@ document.querySelector('.tone-row').addEventListener('click',e=>{
     e.target.classList.add('on');
   }
 });
+document.querySelector('.wc-row').addEventListener('click',e=>{
+  if(e.target.classList.contains('wc-chip')){
+    document.querySelectorAll('.wc-chip').forEach(c=>c.classList.remove('on'));
+    e.target.classList.add('on');
+  }
+});
 document.getElementById('styleRow').addEventListener('click',e=>{
   if(e.target.classList.contains('style-chip')){
     document.querySelectorAll('.style-chip').forEach(c=>c.classList.remove('on'));
@@ -613,6 +630,7 @@ document.getElementById('styleRow').addEventListener('click',e=>{
 });
 function getTopics(){return[...document.querySelectorAll('.chip.on')].map(c=>c.dataset.t);}
 function getTone(){const el=document.querySelector('.tone-chip.on');return el?el.dataset.tone:'sharp & philosophical';}
+function getWordCount(){const el=document.querySelector('.wc-chip.on');return el?el.dataset.wc:'10-15';}
 function getStyle(){const el=document.querySelector('.style-chip.on');return el?el.dataset.style:'personal essay';}
 
 // ── TWEET SLOTS ──
@@ -697,7 +715,7 @@ async function generateAll(){
   tweetData=Array(5).fill('');
   renderSlots(); SLOTS.forEach((_,i)=>setLoading(i));
   await Promise.all(SLOTS.map(async(_,i)=>{
-    try{tweetData[i]=await callTweet(i,topics,getTone());}
+    try{tweetData[i]=await callTweet(i,topics,getTone(),getWordCount());}
     catch(e){tweetData[i]='// failed — tap ↺';}
     updateSlot(i);
   }));
@@ -711,7 +729,7 @@ async function regenAll(){
   rb.disabled=true; gb.disabled=true; rb.textContent='↺...';
   SLOTS.forEach((_,i)=>setLoading(i));
   await Promise.all(SLOTS.map(async(_,i)=>{
-    try{tweetData[i]=await callTweet(i,topics,getTone());}
+    try{tweetData[i]=await callTweet(i,topics,getTone(),getWordCount());}
     catch(e){tweetData[i]='// failed — tap ↺';}
     updateSlot(i);
   }));
@@ -722,7 +740,7 @@ async function regenOne(i){
   if(!hasT&&!topics.length)return;
   const btn=document.getElementById(`rd-${i}`);if(btn)btn.disabled=true;
   setLoading(i);
-  try{tweetData[i]=await callTweet(i,topics,getTone());}
+  try{tweetData[i]=await callTweet(i,topics,getTone(),getWordCount());}
   catch(e){tweetData[i]='// failed — try again';}
   updateSlot(i);
 }
@@ -745,7 +763,7 @@ async function scoreOne(i){
   }catch(e){}
   const nb=document.getElementById(`sc-${i}`);if(nb)nb.disabled=false;
 }
-async function callTweet(idx,topics,tone){
+async function callTweet(idx,topics,tone,wc){
   const slot=SLOTS[idx];
   const hasT=selThought>=0;
   const raw=hasT?thoughts[selThought]:'';
@@ -771,8 +789,10 @@ HARD RULES — break these and the tweet is wrong:
 - lowercase preferred. feels more like a thought than a statement.
 - 1-4 lines max. if it needs more it's an article not a tweet.
 - if the tone is ${tone}, lean into that — but don't perform it. feel it.`;
+  const wcLine = wc && wc !== 'any' ? `Length: strictly ${wc} words. Count carefully.` : `Length: natural — whatever length feels right for the thought.`;
   const usr=`${slot.tag} — ${slot.time} slot.
 ${hasT?`He's been sitting on this thought: "${raw}". Write it as a tweet the way he'd actually type it — no polish, just the rawest version of that idea.`:`Topic area: ${topics.join(', ')}. Pick one specific angle that feels uncomfortable or counterintuitive. Not the obvious take.`}
+${wcLine}
 Output: just the tweet. nothing else. no quotes around it. no explanation.`;
   return callAPI(sys,usr,300);
 }
